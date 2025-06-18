@@ -87,8 +87,8 @@ public class BaseHttpRequest {
     protected boolean callAsync;                                //直接在当前线程请求
     protected String requestMimeType = "text/plain; charset=utf-8";
 
-    protected Parameter headerParameter = new Parameter();
-    protected Parameter requestParameter = new Parameter();
+    protected Parameter headerParameter = new Parameter(BaseOkHttpX.globalHeader);
+    protected Parameter requestParameter =  new Parameter(BaseOkHttpX.globalParameter);
     protected String stringRequestParameter;
     private final Cache undefinedCache = new Cache(new File(""), 1);
     protected Cache cacheSettings = undefinedCache;
@@ -578,7 +578,7 @@ public class BaseHttpRequest {
     }
 
     public Parameter getHeaderParameter() {
-        Parameter headers = headerParameter == null ? headerParameter = new Parameter(BaseOkHttpX.globalHeader) : new Parameter(BaseOkHttpX.globalHeader, headerParameter);
+        Parameter headers = headerParameter == null ? headerParameter = new Parameter(BaseOkHttpX.globalHeader) : headerParameter;
         if (BaseOkHttpX.headerInterceptListener != null) {
             headers = BaseOkHttpX.headerInterceptListener.onIntercept(BaseHttpRequest.this, getUrl(), headers);
         }
@@ -586,13 +586,19 @@ public class BaseHttpRequest {
     }
 
     public Parameter getRequestParameter() {
-        return requestParameter == null ? requestParameter = new Parameter(BaseOkHttpX.globalParameter) : new Parameter(BaseOkHttpX.globalParameter, requestParameter);
+        return requestParameter == null ? requestParameter = new Parameter(BaseOkHttpX.globalParameter) :requestParameter;
     }
 
     public BaseHttpRequest addParameter(String key, Object value) {
         getRequestParameter().add(key, value);
         if (requestBodyType == null)
             requestBodyType = value instanceof File ? REQUEST_BODY_TYPE.FILE : REQUEST_BODY_TYPE.FORM;
+        return this;
+    }
+
+    public BaseHttpRequest addParameter(String key, Object... value) {
+        getRequestParameter().add(key, value);
+        requestBodyType = REQUEST_BODY_TYPE.FORM;
         return this;
     }
 
@@ -835,6 +841,6 @@ public class BaseHttpRequest {
                 }
             }
         }
-        return reserveServiceUrls[0]; // 未找到时返回第一个元素
+        return reserveServiceUrls[0];
     }
 }

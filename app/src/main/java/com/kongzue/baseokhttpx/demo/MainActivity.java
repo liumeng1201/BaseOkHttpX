@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         BaseOkHttpX.serviceUrl = "https://api.apiopen.top/";
         BaseOkHttpX.reserveServiceUrls = new String[]{"https://api.apiopen2.top/", "https://api.apiopen3.top/", "https://api.apiopen4.top/"};
         BaseOkHttpX.disallowSameRequest = true;
-        BaseOkHttpX.globalParameter = new Parameter().add("t1","v1");
+        BaseOkHttpX.globalParameter = new Parameter().add("t1", "v1");
 
         // 日志拦截器测试
         LockLog.logListener = new LockLog.LogListener() {
@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Get.create("/api/sentences")
+                        .addParameter("ids[]", 1, 2, 3, 4, 5)
                         .setCallback(new JsonResponseListener() {
                             @Override
                             public void onResponse(BaseHttpRequest httpRequest, JsonMap main, Exception error) {

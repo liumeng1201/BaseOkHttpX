@@ -40,7 +40,7 @@ dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
   repositories {
     mavenCentral()
-    maven { url 'https://jitpack.io' }    // ←添加这行
+    maven { url 'https://jitpack.io' }    // ← 添加这行
   }
 }
 ```
@@ -49,7 +49,7 @@ dependencyResolutionManagement {
 
 ```gradle
 dependencies {
-    // ...其它引入
+    // ...其它引入，添加下边的代码：
     // BaseOkHttpX 
     implementation 'com.github.kongzue:BaseOkHttpX:1.0.0'
     // BaseJson
@@ -60,6 +60,12 @@ dependencies {
 ```
 
 点击屏幕右上角的 `Sync Now` 同步 Gradle 即可引入 BaseOkHttpX。
+
+另外网络请求需要在项目的 `AndroidManifest.xml` 文件中 `<manifest>` 标签内添加权限：
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+```
 
 ## 快速上手
 
@@ -147,6 +153,14 @@ BaseOkHttpX 默认支持文本、Json、Form表单和上传文件的参数类型
 ```
 .setParameter("string parameter...")
 ```
+
+添加数组参数：
+
+```java
+.addParameter("ids[]", 1, 2, 3, 4, 5)
+```
+
+数组参数会以相同的 key 和不同的值进行请求。
 
 或者 jsonMap 或者 JSONObject 对象：
 
@@ -262,6 +276,57 @@ getRequest(MainActivity.this, "https://dl.coolapk.com/down?pn=com.coolapk.market
 ```
 
 相关参数与上传回调相似。
+
+## 日志输出
+
+BaseOkHttpX 的日志输出会在请求发起时和返回时进行打印，通过 `BaseOkHttpX.debugMode = true` 开启日志输出即可在 Logcat 中看到打印的请求日志：
+
+完整的日志请求举例：
+```
+-------------------------------------
+发出GET请求:https://api.apiopen.top/api/sentences?customKey=customValue&ids%5B%5D=1&ids%5B%5D=2&ids%5B%5D=3&ids%5B%5D=4&ids%5B%5D=5&t1=v1 请求时间：2025-06-18 22:45:45.527
+FORM参数:
+customKey=customValue&ids[]=1&ids[]=2&ids[]=3&ids[]=4&ids[]=5&t1=v1
+=====================================
+tagSocket(4) with statsTag=0xffffffff, statsUid=-1
+-------------------------------------
+成功GET请求:https://api.apiopen.top/api/sentences?customKey=customValue&ids%5B%5D=1&ids%5B%5D=2&ids%5B%5D=3&ids%5B%5D=4&ids%5B%5D=5&t1=v1 返回时间：2025-06-18 22:45:45.783
+FORM参数:
+customKey=customValue&ids[]=1&ids[]=2&ids[]=3&ids[]=4&ids[]=5&t1=v1
+返回内容:
+{
+    "code": 200,
+    "message": "成功!",
+    "result": {
+        "name": "柳花惊雪浦，麦雨涨溪田。",
+        "from": "李贺《南园十三首》"
+    }
+}
+=====================================
+```
+
+## 额外设置
+
+Get、Post、Delete、Patch、Put 在创建请求后会返回实例化的 `BaseHttpRequest` 对象，BaseHttpRequest 还支持一些细节设置，例如：
+```java
+// 单独设置本次请求是否输出日志
+.setShowLogs(boolean)
+
+// 单独设置本次请求超时时间
+.setTimeoutDuration(long) 
+
+// 单独设置本次请求在当前线程执行
+.setCallAsync(boolean)    
+        
+// 本次请求务必在主线程执行回调
+.setCallbackInMainLooper(boolean)
+        
+// 修改本次请求的请求类型
+.setRequestType(REQUEST_TYPE)
+
+// 判断是否正在请求中
+(boolean) = .isRequesting()
+```
 
 ## ToDo
 

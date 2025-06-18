@@ -13,6 +13,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.net.URLEncoder;
 import java.util.Locale;
 import java.util.Map;
@@ -66,7 +67,15 @@ public class Parameter extends TreeMap<String, Object> {
         String result = "";
         if (!entrySet().isEmpty()) {
             for (Entry<String, Object> entry : entrySet()) {
-                result = result + entry.getKey() + "=" + entry.getValue() + "&";
+                if (entry.getValue() != null && entry.getValue().getClass().isArray()) {
+                    int length = Array.getLength(entry.getValue());
+                    for (int i = 0; i < length; i++) {
+                        Object element = Array.get(entry.getValue(), i);
+                        result = result + entry.getKey() + "=" + element + "&";
+                    }
+                } else {
+                    result = result + entry.getKey() + "=" + entry.getValue() + "&";
+                }
             }
             if (result.endsWith("&")) {
                 result = result.substring(0, result.length() - 1);
@@ -75,30 +84,20 @@ public class Parameter extends TreeMap<String, Object> {
         return result;
     }
 
-    @Deprecated
-    public void toPrintString() {
-        toPrintString(0);
-    }
-
-    @Deprecated
-    public void toPrintString(int e) {
-        if (!entrySet().isEmpty()) {
-            for (Entry<String, Object> entry : entrySet()) {
-                if (e == 0) {
-                    Log.i(">>>>>>", entry.getKey() + "=" + entry.getValue());
-                } else {
-                    Log.e(">>>>>>", entry.getKey() + "=" + entry.getValue());
-                }
-            }
-        }
-    }
-
     public RequestBody toFormParameter() {
         RequestBody requestBody;
 
         FormBody.Builder builder = new FormBody.Builder();
         for (Entry<String, Object> entry : entrySet()) {
-            builder.add(entry.getKey() + "", entry.getValue() + "");
+            if (entry.getValue() != null && entry.getValue().getClass().isArray()) {
+                int length = Array.getLength(entry.getValue());
+                for (int i = 0; i < length; i++) {
+                    Object element = Array.get(entry.getValue(), i);
+                    builder.add(String.valueOf(entry.getKey()), String.valueOf(element));
+                }
+            } else {
+                builder.add(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+            }
         }
 
         requestBody = builder.build();
@@ -112,7 +111,15 @@ public class Parameter extends TreeMap<String, Object> {
                 File file = (File) entry.getValue();
                 multipartBuilder.addFormDataPart(entry.getKey(), file.getName(), RequestBody.create(file, MediaType.parse(getMimeType(file))));
             } else {
-                multipartBuilder.addFormDataPart(entry.getKey(), String.valueOf(entry.getValue()));
+                if (entry.getValue() != null && entry.getValue().getClass().isArray()) {
+                    int length = Array.getLength(entry.getValue());
+                    for (int i = 0; i < length; i++) {
+                        Object element = Array.get(entry.getValue(), i);
+                        multipartBuilder.addFormDataPart(String.valueOf(entry.getKey()), String.valueOf(element));
+                    }
+                } else {
+                    multipartBuilder.addFormDataPart(entry.getKey(), String.valueOf(entry.getValue()));
+                }
             }
         }
         return multipartBuilder.build();
@@ -123,7 +130,15 @@ public class Parameter extends TreeMap<String, Object> {
         try {
             if (!entrySet().isEmpty()) {
                 for (Entry<String, Object> entry : entrySet()) {
-                    result = result + encodeUrl(entry.getKey()) + "=" + encodeUrl(String.valueOf(entry.getValue())) + "&";
+                    if (entry.getValue() != null && entry.getValue().getClass().isArray()) {
+                        int length = Array.getLength(entry.getValue());
+                        for (int i = 0; i < length; i++) {
+                            Object element = Array.get(entry.getValue(), i);
+                            result = result + encodeUrl(entry.getKey()) + "=" + encodeUrl(String.valueOf(element)) + "&";
+                        }
+                    }else{
+                        result = result + encodeUrl(entry.getKey()) + "=" + encodeUrl(String.valueOf(entry.getValue())) + "&";
+                    }
                 }
                 if (result.endsWith("&")) {
                     result = result.substring(0, result.length() - 1);
@@ -298,11 +313,16 @@ public class Parameter extends TreeMap<String, Object> {
     }
 
     public String toString(BaseHttpRequest.REQUEST_BODY_TYPE type) {
-       switch (type){
-           case JSON:
-               return toParameterJsonMap().toString(4);
-           default:
-               return toString();
-       }
+        switch (type) {
+            case JSON:
+                return toParameterJsonMap().toString(4);
+            default:
+                return toString();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return toParameterString();
     }
 }
