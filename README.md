@@ -22,6 +22,7 @@
 - **全新升级：** BaseOkHttpX 是 [BaseOkHttpV3](https://github.com/kongzue/BaseOkHttpV3) 的升级重构版本，重做了因旧版代码不断迭代导致的冗余问题，代码结构更为清晰明了
 
 - **简单易用：** BaseOkHttpX 的请求代码非常简单，只需几句即可直接完成请求操作，无论是创建 Get、Post、Put、Patch 还是 Delete 请求，还是上传下载，亦或者添加各种参数，都可以灵活应对。
+- 
 - **线程安全：** 你也无需担心处理线程问题，请求会发生在异步线程，而请求结果的回调会自动返回主线程处理接下来的事务，您只需要专注 UI 逻辑即可，剩下的交给 BaseOkHttpX。
 
 - **Json友好：** BaseOkHttpX 同样默认使用 [BaseJson](https://github.com/kongzue/BaseJson) 作为 json 请求和返回数据的处理实现，BaseJson 默认将 json 文本转换为 Map、List 对象，因此你可以轻松的直接在安卓的列表适配器中使用它们，且更易于持久化存储和读取。
@@ -44,7 +45,7 @@ dependencyResolutionManagement {
 }
 ```
 
-然后，在您项目 app 的 ` build.gradle` 文件中的 `dependencies` 代码块中添加：
+然后，在您项目 app 的 `build.gradle` 文件中的 `dependencies` 代码块中添加：
 
 ```gradle
 dependencies {
@@ -111,9 +112,9 @@ BaseOkHttpX 采用统一回调，即请求成功与失败均会在 onResponse �
     @Override
     public void onResponse(BaseHttpRequest httpRequest, JsonMap main, Exception error) {
         if (!main.isEmpty()){
-            // 弹出UI提示：请求失败，原因根据 error 类型判断
-        }else{
             // 处理正常请求接下来的业务...
+        }else{
+            // 弹出UI提示：请求失败，原因根据 error 类型判断
         }
     }
 });
