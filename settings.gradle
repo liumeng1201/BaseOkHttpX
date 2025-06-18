@@ -21,6 +21,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BaseOkHttpXDemo"
+rootProject.name = "BaseOkHttpX"
 include ':app'
 include ':BaseOkHttpX'

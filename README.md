@@ -48,8 +48,8 @@ dependencyResolutionManagement {
 
 ```gradle
 dependencies {
-		// ...其它引入
-		// BaseOkHttpX 
+    // ...其它引入
+    // BaseOkHttpX 
     implementation 'com.github.kongzue:BaseOkHttpX:1.0.0'
     // BaseJson
     implementation 'com.github.kongzue:BaseJson:1.2.8'
