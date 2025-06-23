@@ -31,7 +31,7 @@
 
 ## 如何引入项目
 
-BaseOkHttpX 发布在 Jitpack，你可以在 [Jitpack 查看仓库信息](https://jitpack.io/#kongzue/BaseOkHttpX) 和最新版本
+BaseOkHttpX 发布在 Jitpack，你可以在 [Jitpack](https://jitpack.io/#kongzue/BaseOkHttpX) 最新版本和仓库信息
 
 要引入到您的安卓项目，首先请在安卓项目根目录的 `settings.gradle` 文件里添加：
 
@@ -391,6 +391,7 @@ BaseOkHttpX 刚刚完成，还有部分不足，以下是一个待办清单，�
 
 ```
 - WebSocket 支持
+- 其他类型的请求结果
 ```
 
 ## 开源协议
