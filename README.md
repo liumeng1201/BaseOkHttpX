@@ -33,6 +33,8 @@
 
 BaseOkHttpX 发布在 Jitpack，你可以在 [Jitpack](https://jitpack.io/#kongzue/BaseOkHttpX) 最新版本和仓库信息
 
+最新版本： <a href="https://jitpack.io/#kongzue/BaseOkHttpX"><img src="https://jitpack.io/v/kongzue/BaseOkHttpX.svg" alt="Jitpack.io"></a> 
+
 要引入到您的安卓项目，首先请在安卓项目根目录的 `settings.gradle` 文件里添加：
 
 ```gradle
