@@ -277,6 +277,63 @@ getRequest(MainActivity.this, "https://dl.coolapk.com/down?pn=com.coolapk.market
 
 相关参数与上传回调相似。
 
+### 流式输出
+
+使用 `.setStreamRequest(true)` 可直接开启流式输出。
+
+可以在回调中动态接收服务器返回的结果：
+
+```java
+.go(new ResponseListener() {
+    @Override
+    public void response(BaseHttpRequest httpRequest, String response, Exception error) {
+        // 其中 response 为每次服务器流式返回的文本，需要自行处理拼接之前返回的数据
+    }
+});
+```
+
+### OpenAI API 标准请求
+
+如果你使用的是标注 OpenAI API 请求，例如 ChatGPT、DeepSeek、火山引擎、OpenRouter 等均支持使用 OpenAI API 标准请求的情况下，可使用 `OpenAIAPIResponseListener` 回调协助处理服务器流式输出的文本拼接。
+
+范例如下：
+
+```java
+Post.create("https://api.deepseek.com/chat/completions")
+        .setStreamRequest(true)
+        .addHeader("Authorization", "Bearer " + deepSeekAPIKey)         // apiKeys 需要您自行通过服务商后台申请
+        .addHeader("Content-Type", "application/json")
+        .setParameter(new JsonMap()
+                .set("model", "deepseek-chat")                          // 以 DeepSeek 举例，具体模型请依据服务商调整
+                .set("messages", new JsonList()
+                        .set(new JsonMap()
+                                .set("role", "user")
+                                .set("content", "你是什么模型？能为我提供什么帮助？")    // 用户提示词
+                        )
+                )
+                .set("stream", true)
+                .set("temperature", 0.7))                               // 热度
+                .go(new OpenAIAPIResponseListener() {                   // 使用 OpenAIAPIResponseListener
+                    @Override
+                    public void onResponse(BaseHttpRequest httpRequest, String subText, String fullResponseText, Exception error, boolean isFinish) {
+                        // 请注意此处 onResponse 方法回回调多次。
+                        // 参数中，subText 是每次服务器返回的文本，fullResponseText 是完成拼接的文本，error 是错误信息（null代表请求正常继续），isFinish 为响应是否结束。
+                        binding.txtResult.setText(fullResponseText);
+                    }
+                });
+```
+
+如果你想一次性直接等待服务器完整返回后处理结果，方案 1 是修改请求参数 json 中的 `stream = false`，方案 2 是复写 `OpenAIAPIResponseListener` 中的 `onFinish` 方法回调：
+
+```java
+OpenAIAPIResponseListener(){
+    @Override
+    public void onFinish(BaseHttpRequest httpRequest,String fullResponseText,Exception error){
+        // 直接使用 fullResponseText 完整结果即可
+    }
+}
+```
+
 ## 日志输出
 
 BaseOkHttpX 的日志输出会在请求发起时和返回时进行打印，通过 `BaseOkHttpX.debugMode = true` 开启日志输出即可在 Logcat 中看到打印的请求日志：

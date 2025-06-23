@@ -17,6 +17,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 import com.kongzue.baseokhttp.util.JsonMap;
 import com.kongzue.baseokhttp.x.BaseOkHttpX;
+import com.kongzue.baseokhttp.x.exceptions.RequestException;
 import com.kongzue.baseokhttp.x.exceptions.TimeOutException;
 import com.kongzue.baseokhttp.x.interfaces.DownloadListener;
 import com.kongzue.baseokhttp.x.interfaces.ResponseListener;
@@ -26,11 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.Proxy;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -88,7 +91,7 @@ public class BaseHttpRequest {
     protected String requestMimeType = "text/plain; charset=utf-8";
 
     protected Parameter headerParameter = new Parameter(BaseOkHttpX.globalHeader);
-    protected Parameter requestParameter =  new Parameter(BaseOkHttpX.globalParameter);
+    protected Parameter requestParameter = new Parameter(BaseOkHttpX.globalParameter);
     protected String stringRequestParameter;
     private final Cache undefinedCache = new Cache(new File(""), 1);
     protected Cache cacheSettings = undefinedCache;
@@ -97,6 +100,7 @@ public class BaseHttpRequest {
     protected DownloadListener downloadListener;
     protected boolean showLogs = true;
     protected String cookieStr;
+    protected boolean streamRequest;                            //流式请求
 
     protected boolean requesting;
 
@@ -157,8 +161,38 @@ public class BaseHttpRequest {
 
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                    setRequesting(false);
-                    onFinish(response);
+                    if (isStreamRequest()) {
+                        if (!response.isSuccessful()) {
+                            onFail(new RequestException(call, response.code()));
+                            return;
+                        }
+                        try (ResponseBody responseBody = response.body();
+                             BufferedReader reader = new BufferedReader(
+                                     new InputStreamReader(responseBody.byteStream()))) {
+
+                            if (isShowLogs()) {
+                                LockLog.Builder logBuilder = LockLog.Builder.create()
+                                        .i("<<<", "-------------------------------------")
+                                        .i("<<<", "成功" + requestType.name() + "请求:" + getUrl() + " 返回时间：" + getNowTimeStr());
+                                if (requestBodyType != null) {
+                                    logBuilder.i("<<<", requestBodyType.name() + "参数:\n" + formatParameterStr());
+                                }
+                                logBuilder.i("<<<", "返回内容:");
+                                logBuilder.build();
+                            }
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                onStream(line);
+                            }
+                            if (isShowLogs()) {
+                                LockLog.logI("<<<", "=====================================");
+                            }
+                            setRequesting(false);
+                        }
+                    } else {
+                        setRequesting(false);
+                        onFinish(response);
+                    }
                 }
             });
         }
@@ -170,6 +204,34 @@ public class BaseHttpRequest {
             return parameter instanceof Parameter ? ((Parameter) parameter).toString(requestBodyType) : String.valueOf(parameter);
         } else {
             return requestBodyType == REQUEST_BODY_TYPE.STRING ? stringRequestParameter : getRequestParameter().toString(requestBodyType);
+        }
+    }
+
+    private void onStream(String line) {
+        deleteRequestInfo(requestInfo);
+        if (isShowLogs()) {
+            LockLog.logI("<<<", line);
+        }
+        if (callbackInMainLooper) {
+            Looper mainLooper = Looper.getMainLooper();
+            handler = new Handler(mainLooper);
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callCallbacks(line, null);
+                }
+            });
+        } else {
+            if (handler != null) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callCallbacks(line, null);
+                    }
+                });
+            } else {
+                callCallbacks(line, null);
+            }
         }
     }
 
@@ -351,8 +413,8 @@ public class BaseHttpRequest {
 
     private Request createRequest() {
         Request.Builder builder = new Request.Builder();
-        RequestBody originRequestBode = createOriginRequestBody();
-        RequestBody requestBody = originRequestBode == null ? null : new RequestBodyImpl(originRequestBode) {
+        RequestBody originRequestBody = createOriginRequestBody();
+        RequestBody requestBody = originRequestBody == null ? null : new RequestBodyImpl(originRequestBody) {
             @Override
             public void onUploading(long current, long total, boolean done) {
                 callUploadingCallback(current, total, done);
@@ -451,7 +513,7 @@ public class BaseHttpRequest {
                     case JSON:
                         return RequestBody.create(
                                 ((Parameter) BaseOkHttpX.parameterInterceptListener.onIntercept(BaseHttpRequest.this, getUrl(), getRequestParameter()))
-                                        .toParameterJson().toString(), MediaType.parse(getRequestMimeType()));
+                                        .toParameterJsonMap().toString(), MediaType.parse(getRequestMimeType()));
                 }
             } else {
                 switch (requestBodyType) {
@@ -462,7 +524,7 @@ public class BaseHttpRequest {
                     case FORM:
                         return getRequestParameter().toFormParameter();
                     case JSON:
-                        return RequestBody.create(getRequestParameter().toParameterJson().toString(), MediaType.parse(getRequestMimeType()));
+                        return RequestBody.create(getRequestParameter().toParameterJsonMap().toString(), MediaType.parse(getRequestMimeType()));
                 }
             }
         }
@@ -586,7 +648,7 @@ public class BaseHttpRequest {
     }
 
     public Parameter getRequestParameter() {
-        return requestParameter == null ? requestParameter = new Parameter(BaseOkHttpX.globalParameter) :requestParameter;
+        return requestParameter == null ? requestParameter = new Parameter(BaseOkHttpX.globalParameter) : requestParameter;
     }
 
     public BaseHttpRequest addParameter(String key, Object value) {
@@ -663,7 +725,7 @@ public class BaseHttpRequest {
     private Timer timeoutChecker;
     private RequestInfo requestInfo;
 
-    private void setRequesting(boolean requesting) {
+    public void setRequesting(boolean requesting) {
         this.requesting = requesting;
         if (requesting) {
             timeoutChecker = new Timer();
@@ -842,5 +904,14 @@ public class BaseHttpRequest {
             }
         }
         return reserveServiceUrls[0];
+    }
+
+    public boolean isStreamRequest() {
+        return streamRequest;
+    }
+
+    public BaseHttpRequest setStreamRequest(boolean streamRequest) {
+        this.streamRequest = streamRequest;
+        return this;
     }
 }
