@@ -316,7 +316,7 @@ Post.create("https://api.deepseek.com/chat/completions")
                 .go(new OpenAIAPIResponseListener() {                   // 使用 OpenAIAPIResponseListener
                     @Override
                     public void onResponse(BaseHttpRequest httpRequest, String subText, String fullResponseText, Exception error, boolean isFinish) {
-                        // 请注意此处 onResponse 方法回回调多次。
+                        // 请注意此处 onResponse 方法会回调多次。
                         // 参数中，subText 是每次服务器返回的文本，fullResponseText 是完成拼接的文本，error 是错误信息（null代表请求正常继续），isFinish 为响应是否结束。
                         binding.txtResult.setText(fullResponseText);
                     }
