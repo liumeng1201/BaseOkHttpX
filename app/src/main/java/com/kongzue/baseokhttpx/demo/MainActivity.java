@@ -43,23 +43,23 @@ public class MainActivity extends AppCompatActivity {
         //BaseOkHttpX.globalParameter = new Parameter().add("t1", "v1");
 
         // 日志拦截器测试
-//        LockLog.logListener = new LockLog.LogListener() {
-//
-//            @Override
-//            public void log(LockLog.LogBody.LEVEL level, String logs) {
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        if (historyLogs == null) {
-//                            historyLogs = logs;
-//                        } else {
-//                            historyLogs = historyLogs + "\n" + logs;
-//                        }
-//                        binding.txtLogs.setText(historyLogs);
-//                    }
-//                });
-//            }
-//        };
+        LockLog.logListener = new LockLog.LogListener() {
+
+            @Override
+            public void log(LockLog.LogBody.LEVEL level, String logs) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (historyLogs == null) {
+                            historyLogs = logs;
+                        } else {
+                            historyLogs = historyLogs + "\n" + logs;
+                        }
+                        binding.txtLogs.setText(historyLogs);
+                    }
+                });
+            }
+        };
 
         // 参数拦截器测试
 //        BaseOkHttpX.parameterInterceptListener = new ParameterInterceptListener() {
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
 
         binding.btnGptTest.setOnClickListener(new View.OnClickListener() {
 
-            String deepSeekAPIKey = "sk-a13b93ab341c452d98807ae26b0250e4";
+            String deepSeekAPIKey = "apiKeys";
 
             @Override
             public void onClick(View v) {
