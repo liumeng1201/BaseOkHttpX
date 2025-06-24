@@ -408,8 +408,8 @@ public class BaseHttpRequest {
 
                 @Override
                 public List<Cookie> loadForRequest(HttpUrl url) {
-                    List<Cookie> cookies = BaseOkHttpX.cookieStore.get(url.host());
-                    return cookies != null ? cookies : new ArrayList<Cookie>();
+                    List<Cookie> cookies = BaseOkHttpX.cookieStore.get(url);
+                    return cookies != null ? cookies : new ArrayList<>();
                 }
             });
         }
