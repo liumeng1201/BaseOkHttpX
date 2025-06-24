@@ -105,6 +105,11 @@ public class BaseHttpRequest {
 
     protected boolean requesting;
 
+    /**
+     * 发起请求并同时注册回调监听器。
+     *
+     * @param callback 用于接收请求结果的回调接口
+     */
     public void go(BaseResponseListener callback) {
         registerCallback(callback);
         go();
@@ -116,6 +121,11 @@ public class BaseHttpRequest {
     private Call httpCall;
     private Handler handler;
 
+    /**
+     * 执行网络请求。
+     * <p>
+     * 根据配置自动输出日志并在请求完成后触发回调。
+     */
     public void go() {
         if (isShowLogs()) {
             LockLog.Builder logBuilder = LockLog.Builder.create()
@@ -549,6 +559,13 @@ public class BaseHttpRequest {
         return serviceUrl + url;
     }
 
+    /**
+     * 获取最终请求地址。
+     *
+     * 当为 GET 请求时会自动拼接参数。
+     *
+     * @return 完整的请求地址
+     */
     public String getUrl() {
         if (requestType == REQUEST_TYPE.GET) {
             Object parameter = getRequestParameter();
@@ -572,55 +589,121 @@ public class BaseHttpRequest {
         }
     }
 
+    /**
+     * 设置请求地址。
+     *
+     * @param url 请求的相对或绝对路径
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setUrl(String url) {
         this.url = url;
         return this;
     }
 
+    /**
+     * 获取当前使用的代理设置。
+     *
+     * @return 代理对象，可能为 {@code null}
+     */
     public Proxy getProxy() {
         return proxy;
     }
 
+    /**
+     * 设置请求所使用的代理。
+     *
+     * @param proxy 代理配置
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setProxy(Proxy proxy) {
         this.proxy = proxy;
         return this;
     }
 
+    /**
+     * 获取自定义的 OkHttpClient 实例。
+     *
+     * @return OkHttpClient 实例
+     */
     public OkHttpClient getOkHttpClient() {
         return okHttpClient;
     }
 
+    /**
+     * 指定自定义的 OkHttpClient。
+     *
+     * @param okHttpClient OkHttpClient 对象
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setOkHttpClient(OkHttpClient okHttpClient) {
         this.okHttpClient = okHttpClient;
         return this;
     }
 
+    /**
+     * 获取本次请求的超时时长，单位秒。
+     *
+     * @return 超时秒数
+     */
     public long getTimeoutDuration() {
         return timeoutDuration <= 0 ? (BaseOkHttpX.globalTimeOutDuration <= 0 ? 10 : BaseOkHttpX.globalTimeOutDuration) : timeoutDuration;
     }
 
+    /**
+     * 设置本次请求的超时时长。
+     *
+     * @param timeoutDuration 超时秒数
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setTimeoutDuration(long timeoutDuration) {
         this.timeoutDuration = timeoutDuration;
         return this;
     }
 
+    /**
+     * 是否在主线程回调结果。
+     *
+     * @return true 表示强制在主线程回调
+     */
     public boolean isCallbackInMainLooper() {
         return callbackInMainLooper;
     }
 
+    /**
+     * 设置是否在主线程回调结果。
+     *
+     * @param callbackInMainLooper true 时回调将在主线程执行
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setCallbackInMainLooper(boolean callbackInMainLooper) {
         this.callbackInMainLooper = callbackInMainLooper;
         return this;
     }
 
+    /**
+     * 获取底层的 {@link Call} 对象。
+     *
+     * @return OkHttp 的 Call 实例
+     */
     public Call getHttpCall() {
         return httpCall;
     }
 
+    /**
+     * 获取当前请求方式。
+     *
+     * @return 请求类型枚举
+     */
     public REQUEST_TYPE getRequestType() {
         return requestType;
     }
 
+    /**
+     * 设置请求方式，例如 GET 或 POST。
+     *
+     * @param requestType 请求类型
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setRequestType(REQUEST_TYPE requestType) {
         this.requestType = requestType;
         return this;
@@ -630,10 +713,21 @@ public class BaseHttpRequest {
         Log.i(">>>", data);
     }
 
+    /**
+     * 获取请求体的 MimeType。
+     *
+     * @return 请求体类型描述
+     */
     public String getRequestMimeType() {
         return requestMimeType;
     }
 
+    /**
+     * 指定请求体的 MimeType。
+     *
+     * @param requestMimeType MimeType 字符串
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setRequestMimeType(String requestMimeType) {
         this.requestMimeType = requestMimeType;
         return this;
@@ -646,6 +740,11 @@ public class BaseHttpRequest {
         return false;
     }
 
+    /**
+     * 获取当前请求头参数集合。
+     *
+     * @return 请求头参数
+     */
     public Parameter getHeaderParameter() {
         Parameter headers = headerParameter == null ? headerParameter = new Parameter(BaseOkHttpX.globalHeader) : headerParameter;
         if (BaseOkHttpX.headerInterceptListener != null) {
@@ -654,10 +753,22 @@ public class BaseHttpRequest {
         return headers;
     }
 
+    /**
+     * 获取当前的请求参数集合。
+     *
+     * @return 请求参数
+     */
     public Parameter getRequestParameter() {
         return requestParameter == null ? requestParameter = new Parameter(BaseOkHttpX.globalParameter) : requestParameter;
     }
 
+    /**
+     * 向请求体中添加单个参数。
+     *
+     * @param key   参数名
+     * @param value 参数值
+     * @return 当前请求对象
+     */
     public BaseHttpRequest addParameter(String key, Object value) {
         getRequestParameter().add(key, value);
         if (requestBodyType == null)
@@ -665,24 +776,49 @@ public class BaseHttpRequest {
         return this;
     }
 
+    /**
+     * 向请求体中添加数组形式的参数。
+     *
+     * @param key   参数名
+     * @param value 参数数组
+     * @return 当前请求对象
+     */
     public BaseHttpRequest addParameter(String key, Object... value) {
         getRequestParameter().add(key, value);
         requestBodyType = REQUEST_BODY_TYPE.FORM;
         return this;
     }
 
+    /**
+     * 直接设置字符串形式的请求体。
+     *
+     * @param parameter 原始字符串参数
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setParameter(String parameter) {
         this.stringRequestParameter = parameter;
         if (requestBodyType == null) requestBodyType = REQUEST_BODY_TYPE.STRING;
         return this;
     }
 
+    /**
+     * 使用 {@link Parameter} 对象设置请求参数。
+     *
+     * @param parameter 参数集合
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setParameter(Parameter parameter) {
         this.requestParameter = parameter;
         if (requestBodyType == null) requestBodyType = REQUEST_BODY_TYPE.FORM;
         return this;
     }
 
+    /**
+     * 使用 JsonMap 设置请求参数，并自动将 MimeType 设置为 JSON。
+     *
+     * @param parameter JsonMap 参数
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setParameter(JsonMap parameter) {
         this.requestParameter = new Parameter(parameter);
         if (requestBodyType == null) requestBodyType = REQUEST_BODY_TYPE.JSON;
@@ -690,6 +826,12 @@ public class BaseHttpRequest {
         return this;
     }
 
+    /**
+     * 使用 JSONObject 设置请求参数，MimeType 同样为 JSON。
+     *
+     * @param parameter JSON 对象
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setParameter(JSONObject parameter) {
         this.requestParameter = new Parameter(new JsonMap(parameter == null ? "" : parameter.toString()));
         if (requestBodyType == null) requestBodyType = REQUEST_BODY_TYPE.JSON;
@@ -697,34 +839,74 @@ public class BaseHttpRequest {
         return this;
     }
 
+    /**
+     * 新增请求头信息。
+     *
+     * @param key   请求头名称
+     * @param value 请求头值
+     * @return 当前请求对象
+     */
     public BaseHttpRequest addHeader(String key, Object value) {
         getHeaderParameter().add(key, value);
         return this;
     }
 
+    /**
+     * 设置完整的请求头参数集合。
+     *
+     * @param parameter 请求头参数
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setHeader(Parameter parameter) {
         this.headerParameter = parameter;
         return this;
     }
 
+    /**
+     * 获取当前请求体类型。
+     *
+     * @return 请求体类型枚举
+     */
     public REQUEST_BODY_TYPE getRequestBodyType() {
         return requestBodyType;
     }
 
+    /**
+     * 设置请求体类型。
+     *
+     * @param requestBodyType 请求体类型枚举
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setRequestBodyType(REQUEST_BODY_TYPE requestBodyType) {
         this.requestBodyType = requestBodyType;
         return this;
     }
 
+    /**
+     * 当前请求是否在调用线程中同步执行。
+     *
+     * @return true 表示同步执行
+     */
     public boolean isCallAsync() {
         return callAsync;
     }
 
+    /**
+     * 设置是否在调用线程内同步执行请求。
+     *
+     * @param callAsync true 则在当前线程执行
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setCallAsync(boolean callAsync) {
         this.callAsync = callAsync;
         return this;
     }
 
+    /**
+     * 当前请求是否正在执行中。
+     *
+     * @return true 表示请求未完成
+     */
     public boolean isRequesting() {
         return requesting;
     }
@@ -732,6 +914,13 @@ public class BaseHttpRequest {
     private Timer timeoutChecker;
     private RequestInfo requestInfo;
 
+    /**
+     * 手动标记请求的执行状态。
+     *
+     * 当设置为 true 时会启动超时检测，false 则停止检测。
+     *
+     * @param requesting 是否处于请求状态
+     */
     public void setRequesting(boolean requesting) {
         this.requesting = requesting;
         if (requesting) {
@@ -779,6 +968,12 @@ public class BaseHttpRequest {
         return null;
     }
 
+    /**
+     * 绑定生命周期，在 Context 销毁时自动取消请求。
+     *
+     * @param context Activity 或其他上下文对象
+     * @return 当前请求对象
+     */
     public BaseHttpRequest bindLifecycleOwner(Context context) {
         if (context instanceof LifecycleOwner) {
             return bindLifecycleOwner((LifecycleOwner) context);
@@ -786,6 +981,12 @@ public class BaseHttpRequest {
         return this;
     }
 
+    /**
+     * 绑定生命周期，在 LifecycleOwner 销毁时自动取消请求。
+     *
+     * @param lifecycleOwner 生命周期拥有者
+     * @return 当前请求对象
+     */
     public BaseHttpRequest bindLifecycleOwner(LifecycleOwner lifecycleOwner) {
         lifecycleOwner.getLifecycle().addObserver(new LifecycleEventObserver() {
             @Override
@@ -798,6 +999,9 @@ public class BaseHttpRequest {
         return this;
     }
 
+    /**
+     * 取消当前请求并清理相关资源。
+     */
     public void cancel() {
         handler = null;
         if (callbacks != null) {
@@ -812,46 +1016,95 @@ public class BaseHttpRequest {
         }
     }
 
+    /**
+     * 注册一个结果回调监听器。
+     *
+     * @param callback 回调接口
+     * @return 当前请求对象
+     */
     public BaseHttpRequest registerCallback(BaseResponseListener callback) {
         callbacks.add(callback);
         return this;
     }
 
+    /**
+     * 设置回调监听器，效果同 {@link #registerCallback(BaseResponseListener)}。
+     */
     public BaseHttpRequest setCallback(BaseResponseListener callback) {
         return registerCallback(callback);
     }
 
+    /**
+     * 追加一个回调监听器。
+     */
     public BaseHttpRequest addCallback(BaseResponseListener callback) {
         return registerCallback(callback);
     }
 
+    /**
+     * 移除指定的回调监听器。
+     *
+     * @param callback 待移除的回调
+     * @return 当前请求对象
+     */
     public BaseHttpRequest unregisterCallback(BaseResponseListener callback) {
         callbacks.remove(callback);
         return this;
     }
 
+    /**
+     * 与 {@link #unregisterCallback(BaseResponseListener)} 相同。
+     */
     public BaseHttpRequest removeCallback(BaseResponseListener callback) {
         return unregisterCallback(callback);
     }
 
+    /**
+     * 清除所有已注册的回调监听器。
+     *
+     * @return 当前请求对象
+     */
     public BaseHttpRequest removeAllCallbacks() {
         callbacks.clear();
         return this;
     }
 
+    /**
+     * 获取所有已注册的回调监听器列表。
+     *
+     * @return 回调监听器集合
+     */
     public List<BaseResponseListener> getCallbacks() {
         return callbacks;
     }
 
+    /**
+     * 获取缓存配置，如果未设置则返回全局配置。
+     *
+     * @return 缓存配置对象
+     */
     public Cache getCacheSettings() {
         return cacheSettings != undefinedCache ? cacheSettings : BaseOkHttpX.requestCacheSettings;
     }
 
+    /**
+     * 设置当前请求的缓存策略。
+     *
+     * @param cacheSettings 缓存配置
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setCacheSettings(Cache cacheSettings) {
         this.cacheSettings = cacheSettings;
         return this;
     }
 
+    /**
+     * 指定下载文件的保存路径，并设置下载监听器。
+     *
+     * @param file            目标文件
+     * @param downloadListener 下载进度回调
+     * @return 当前请求对象
+     */
     public BaseHttpRequest downloadToFile(File file, DownloadListener downloadListener) {
         this.downloadFile = file;
         this.downloadListener = downloadListener;
@@ -862,32 +1115,70 @@ public class BaseHttpRequest {
         return this;
     }
 
+    /**
+     * 获取上传监听器。
+     *
+     * @return 上传监听器
+     */
     public UploadListener getUploadListener() {
         return uploadListener;
     }
 
+    /**
+     * 设置上传监听器。
+     *
+     * @param uploadListener 上传监听回调
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setUploadListener(UploadListener uploadListener) {
         this.uploadListener = uploadListener;
         return this;
     }
 
+    /**
+     * 获取下载监听器。
+     *
+     * @return 下载监听器
+     */
     public DownloadListener getDownloadListener() {
         return downloadListener;
     }
 
+    /**
+     * 设置是否输出调试日志。
+     *
+     * @param showLogs 是否显示日志
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setShowLogs(boolean showLogs) {
         this.showLogs = showLogs;
         return this;
     }
 
+    /**
+     * 判断是否允许输出日志。
+     *
+     * @return true 表示会输出日志
+     */
     public boolean isShowLogs() {
         return showLogs && BaseOkHttpX.debugMode;
     }
 
+    /**
+     * 获取设置的 Cookie 字符串。
+     *
+     * @return Cookie 内容
+     */
     public String getCookieStr() {
         return cookieStr;
     }
 
+    /**
+     * 设置请求的 Cookie 字符串。
+     *
+     * @param cookieStr Cookie 内容
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setCookieStr(String cookieStr) {
         this.cookieStr = cookieStr;
         return this;
@@ -913,10 +1204,21 @@ public class BaseHttpRequest {
         return reserveServiceUrls[0];
     }
 
+    /**
+     * 是否以流的方式处理响应。
+     *
+     * @return true 表示流式请求
+     */
     public boolean isStreamRequest() {
         return streamRequest;
     }
 
+    /**
+     * 设置是否以流的方式处理响应内容。
+     *
+     * @param streamRequest 是否流式处理
+     * @return 当前请求对象
+     */
     public BaseHttpRequest setStreamRequest(boolean streamRequest) {
         this.streamRequest = streamRequest;
         return this;
