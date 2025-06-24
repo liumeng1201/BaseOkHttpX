@@ -1,5 +1,6 @@
 package com.kongzue.baseokhttp.x.interfaces;
 
+import com.kongzue.baseokhttp.x.BaseOkHttpX;
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 
 import org.json.JSONArray;
@@ -17,22 +18,22 @@ public class OpenAIAPIResponseListener extends ResponseListener {
         if (error == null) {
             if (line.startsWith("data: ")) {
                 String jsonData = line.substring(6).trim();
+                String contentChunk = parseResponseJson(jsonData);
                 if (jsonData.equals("[DONE]")) {
                     httpRequest.setRequesting(false);
                     isFinish = true;
-                    onResponse(httpRequest, line, optimizationContent, error, isFinish);
+                    onResponse(httpRequest, contentChunk, optimizationContent, error, isFinish);
                     onFinish(httpRequest, optimizationContent, error);
                     return;
                 }
-                String contentChunk = parseResponseJson(jsonData);
                 if (contentChunk != null) {
                     resultBuilder.append(contentChunk);
                     optimizationContent = resultBuilder.toString().replaceAll("\n\n", "\n　　");
-                    onResponse(httpRequest, line, optimizationContent, error, isFinish);
+                    onResponse(httpRequest, contentChunk, optimizationContent, error, isFinish);
                 }
             }
         } else {
-            onResponse(httpRequest, line, optimizationContent, error, isFinish);
+            onResponse(httpRequest, "", optimizationContent, error, isFinish);
         }
     }
 
@@ -46,14 +47,19 @@ public class OpenAIAPIResponseListener extends ResponseListener {
                 return delta.optString("content", "");
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            if (BaseOkHttpX.debugMode) {
+                e.printStackTrace();
+            }
         }
-        return null;
+        return "";
     }
 
-    public void onResponse(BaseHttpRequest httpRequest, String subText, String fullResponseText, Exception error, boolean isFinish){};
+    public void onResponse(BaseHttpRequest httpRequest, String subText, String fullResponseText, Exception error, boolean isFinish) {
+    }
 
-    public void onFinish(BaseHttpRequest httpRequest, String fullResponseText, Exception error){
+    ;
+
+    public void onFinish(BaseHttpRequest httpRequest, String fullResponseText, Exception error) {
 
     }
 }
