@@ -34,7 +34,7 @@
 
 ## Demo
 
-[![下载Demo](https://github.com/kongzue/BaseOkHttpX/blob/main/readme/demo_download.png?raw=true&demo=v1.2.1.2)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.2.0/app-release.apk)
+[![下载Demo](https://github.com/kongzue/BaseOkHttpX/blob/main/readme/demo_download.png?raw=true&demo=v1.2.1.3)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.2.1/app-release.apk)
 
 ## 如何引入项目
 
@@ -60,7 +60,7 @@ dependencyResolutionManagement {
 dependencies {
     // ...添加下边的代码：
     // BaseOkHttpX 
-    implementation 'com.github.kongzue:BaseOkHttpX:1.2.0'
+    implementation 'com.github.kongzue:BaseOkHttpX:1.2.1'
     // BaseJson
     implementation 'com.github.kongzue:BaseJson:1.2.8'
     // OkHttp
