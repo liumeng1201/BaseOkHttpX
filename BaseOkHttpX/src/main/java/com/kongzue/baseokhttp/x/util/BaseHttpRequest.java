@@ -146,8 +146,7 @@ public class BaseHttpRequest {
         addRequestInfo(requestInfo);
         setRequesting(true);
         if (callAsync) {
-            try {
-                Response response = httpCall.execute();
+            try (Response response = httpCall.execute()) {
                 onFinish(response);
             } catch (Exception e) {
                 onFail(e);
@@ -162,36 +161,40 @@ public class BaseHttpRequest {
 
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                    if (isStreamRequest()) {
-                        if (!response.isSuccessful()) {
-                            onFail(new RequestException(call, response.code()));
-                            return;
-                        }
-                        try (ResponseBody responseBody = response.body();
-                             BufferedReader reader = new BufferedReader(
-                                     new InputStreamReader(responseBody.byteStream()))) {
-                            if (isShowLogs()) {
-                                LockLog.Builder logBuilder = LockLog.Builder.create()
-                                        .i("<<<", "-------------------------------------")
-                                        .i("<<<", "成功" + requestType.name() + "请求:" + getUrl() + " 返回时间：" + getNowTimeStr());
-                                if (requestBodyType != null) {
-                                    logBuilder.i("<<<", requestBodyType.name() + "参数:\n" + formatParameterStr());
+                    try {
+                        if (isStreamRequest()) {
+                            if (!response.isSuccessful()) {
+                                onFail(new RequestException(call, response.code()));
+                                return;
+                            }
+                            try (ResponseBody responseBody = response.body();
+                                 BufferedReader reader = new BufferedReader(
+                                         new InputStreamReader(responseBody.byteStream()))) {
+                                if (isShowLogs()) {
+                                    LockLog.Builder logBuilder = LockLog.Builder.create()
+                                            .i("<<<", "-------------------------------------")
+                                            .i("<<<", "成功" + requestType.name() + "请求:" + getUrl() + " 返回时间：" + getNowTimeStr());
+                                    if (requestBodyType != null) {
+                                        logBuilder.i("<<<", requestBodyType.name() + "参数:\n" + formatParameterStr());
+                                    }
+                                    logBuilder.i("<<<", "返回内容:");
+                                    logBuilder.build();
                                 }
-                                logBuilder.i("<<<", "返回内容:");
-                                logBuilder.build();
+                                String line;
+                                while ((line = reader.readLine()) != null) {
+                                    onStream(line, responseBody.contentType());
+                                }
+                                if (isShowLogs()) {
+                                    LockLog.logI("<<<", "=====================================");
+                                }
+                                setRequesting(false);
                             }
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                onStream(line,responseBody.contentType());
-                            }
-                            if (isShowLogs()) {
-                                LockLog.logI("<<<", "=====================================");
-                            }
+                        } else {
                             setRequesting(false);
+                            onFinish(response);
                         }
-                    } else {
-                        setRequesting(false);
-                        onFinish(response);
+                    } finally {
+                        response.close();
                     }
                 }
             });
@@ -238,9 +241,9 @@ public class BaseHttpRequest {
 
     private void onFinish(Response response) {
         deleteRequestInfo(requestInfo);
-        try {
+        try (Response r = response) {
             if (downloadFile == null) {
-                ResponseBody body = response.body();
+                ResponseBody body = r.body();
                 byte[] responseBytes = body.bytes();
                 MediaType mediaType = body.contentType();
                 String charset = mediaType.charset(StandardCharsets.UTF_8).name();
@@ -291,18 +294,17 @@ public class BaseHttpRequest {
                 byte[] buf = new byte[2048];
                 int len = 0;
                 long sum = 0;
-                long total = response.body().contentLength();
-
-                InputStream is = response.body().byteStream();
-                FileOutputStream fos = new FileOutputStream(downloadFile);
-
-                while ((len = is.read(buf)) != -1) {
-                    fos.write(buf, 0, len);
-                    sum += len;
-
-                    callDownloadingCallback(sum * 1.0f / total, sum, total);
+                ResponseBody body = r.body();
+                long total = body.contentLength();
+                try (InputStream is = body.byteStream();
+                     FileOutputStream fos = new FileOutputStream(downloadFile)) {
+                    while ((len = is.read(buf)) != -1) {
+                        fos.write(buf, 0, len);
+                        sum += len;
+                        callDownloadingCallback(sum * 1.0f / total, sum, total);
+                    }
+                    fos.flush();
                 }
-                fos.flush();
             }
         } catch (Exception e) {
             onFail(e);
