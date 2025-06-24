@@ -4,6 +4,9 @@ import android.content.Context;
 
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 
+/**
+ * PUT 请求封装类。
+ */
 public class Put extends BaseHttpRequest {
 
     public Put(String url) {

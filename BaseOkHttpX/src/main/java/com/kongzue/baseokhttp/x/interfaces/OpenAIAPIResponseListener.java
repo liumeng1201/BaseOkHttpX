@@ -7,6 +7,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * OpenAI 流式接口专用回调，可逐行返回内容。
+ */
 public class OpenAIAPIResponseListener extends ResponseListener {
 
     StringBuilder resultBuilder = new StringBuilder();
@@ -52,9 +55,25 @@ public class OpenAIAPIResponseListener extends ResponseListener {
         return "";
     }
 
+    /**
+     * 流式文本回调
+     *
+     * @param httpRequest       当前请求对象
+     * @param subText           本次返回的增量文本
+     * @param fullResponseText  截止目前的完整文本
+     * @param error             请求异常
+     * @param isFinish          是否已经完成
+     */
     public void onResponse(BaseHttpRequest httpRequest, String subText, String fullResponseText, Exception error, boolean isFinish) {
     }
 
+    /**
+     * 流式请求结束回调
+     *
+     * @param httpRequest      当前请求对象
+     * @param fullResponseText 完整的返回内容
+     * @param error            请求异常
+     */
     public void onFinish(BaseHttpRequest httpRequest, String fullResponseText, Exception error) {
 
     }
