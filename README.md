@@ -34,7 +34,7 @@
 
 ## Demo
 
-[![下载Demo](https://github.com/kongzue/BaseOkHttpX/blob/main/readme/demo_download.png?raw=true&demo=v1.2.1.1)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.2.0/app-release.apk)
+[![下载Demo](https://github.com/kongzue/BaseOkHttpX/blob/main/readme/demo_download.png?raw=true&demo=v1.2.1.2)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.2.0/app-release.apk)
 
 ## 如何引入项目
 
@@ -58,7 +58,7 @@ dependencyResolutionManagement {
 
 ```gradle
 dependencies {
-    // ...其它引入，添加下边的代码：
+    // ...添加下边的代码：
     // BaseOkHttpX 
     implementation 'com.github.kongzue:BaseOkHttpX:1.2.0'
     // BaseJson
@@ -136,6 +136,18 @@ BaseOkHttpX 采用统一回调，即请求成功与失败均会在 onResponse �
 ```
 
 这样设计的目的在于避免 app 开发者反复判断空指针和覆写不必要的方法，可以专注于业务逻辑的开发，不用担心繁琐的事务处理。
+
+#### 回调类型
+
+BaseOkHttpX 支持多种回调类型，具体如下：
+
+| 回调类                    | 说明                                                         | 数据格式       |
+| ------------------------- | ------------------------------------------------------------ | -------------- |
+| BytesResponseListener     | 会以数组类型的返回服务器响应的字节                           | `byte[]`       |
+| ResponseListener          | 会以文本格式的返回服务器响应的数据                           | `String`       |
+| JsonResponseListener      | 会以 JsonMap 对象格式返回服务器响应的 json 数据              | `JsonMap`      |
+| OpenAIAPIResponseListener | 支持流式标准 OpenAI API 请求返回的经过处理格式化后的文本数据 | `String`       |
+| BaseResponseListener      | 仅返回原始的 okHttp 的 ResponseBody 用于自行处理             | `ResponseBody` |
 
 ### 添加参数
 
@@ -253,8 +265,8 @@ BaseOkHttpX.httpRequestDetailsLogs = (boolean)
 在设置请求参数时传入 File 类型的 value 即代表上传文件。
 
 ```java
-.addParameter("file1",new File(getCacheDir(),"cache1.jpg"))
-.addParameter("file2",new File(getCacheDir(),"cache2.jpg"))
+.addParameter("file1", new File(getCacheDir(), "cache1.jpg"))
+.addParameter("file2", new File(getCacheDir(), "cache2.jpg"))
 ```
 
 当请求是上传文件时，可以通过以下方法监听上传进度：
@@ -378,7 +390,7 @@ Get、Post、Delete、Patch、Put 在创建请求后会返回实例化的 `BaseH
 // 单独设置本次请求是否输出日志
 .setShowLogs(boolean)
 
-// 单独设置本次请求超时时间
+// 单独设置本次请求超时时间，单位为秒
 .setTimeoutDuration(long) 
 
 // 单独设置本次请求在当前线程执行

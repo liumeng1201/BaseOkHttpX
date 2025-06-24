@@ -55,8 +55,6 @@ public class OpenAIAPIResponseListener extends ResponseListener {
     public void onResponse(BaseHttpRequest httpRequest, String subText, String fullResponseText, Exception error, boolean isFinish) {
     }
 
-    ;
-
     public void onFinish(BaseHttpRequest httpRequest, String fullResponseText, Exception error) {
 
     }
