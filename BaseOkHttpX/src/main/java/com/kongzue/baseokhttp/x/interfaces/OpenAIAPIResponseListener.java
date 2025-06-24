@@ -26,11 +26,9 @@ public class OpenAIAPIResponseListener extends ResponseListener {
                     onFinish(httpRequest, optimizationContent, error);
                     return;
                 }
-                if (contentChunk != null) {
-                    resultBuilder.append(contentChunk);
-                    optimizationContent = resultBuilder.toString().replaceAll("\n\n", "\n　　");
-                    onResponse(httpRequest, contentChunk, optimizationContent, error, isFinish);
-                }
+                resultBuilder.append(contentChunk);
+                optimizationContent = resultBuilder.toString().replaceAll("\n\n", "\n　　");
+                onResponse(httpRequest, contentChunk, optimizationContent, error, isFinish);
             }
         } else {
             onResponse(httpRequest, "", optimizationContent, error, isFinish);
