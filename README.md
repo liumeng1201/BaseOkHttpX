@@ -1,5 +1,5 @@
 <div align=center>    
-    <img src="https://github.com/kongzue/BaseOkHttpX/blob/main/readme/baseokhttpx.png" width="150">    
+    <img src="https://github.com/kongzue/BaseOkHttpX/blob/main/readme/baseokhttpx.png" width="130">    
     <center><h1>Kongzue BaseOkHttpX</h1></center> 
 </div>
 
