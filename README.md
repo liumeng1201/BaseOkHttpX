@@ -143,12 +143,12 @@ BaseOkHttpX 支持多种回调类型，具体如下：
 
 | 回调类                    | 说明                                   | 数据格式           |
 | ------------------------- |--------------------------------------|----------------|
-| BytesResponseListener     | 会以数组类型的返回服务器响应的字节                    | `byte[]`       |
-| ResponseListener          | 会以文本格式的返回服务器响应的数据                    | `String`       |
-| JsonResponseListener      | 会以 JsonMap 对象格式返回服务器响应的 json 数据      | `JsonMap`      |
-| OpenAIAPIResponseListener | 支持流式标准 OpenAI API 请求返回的经过处理格式化后的文本数据 | `String`       |
-| BaseResponseListener      | 仅返回原始的 okHttp 的 ResponseBody 用于自行处理  | `ResponseBody` |
-| BitmapResponseListener    | 会以位图 Bitmap 格式的返回服务器响应的数据            | `Bitmap`       |
+| [BytesResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BytesResponseListener.java)     | 会以数组类型的返回服务器响应的字节                    | `byte[]`       |
+| [ResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/ResponseListener.java)          | 会以文本格式的返回服务器响应的数据                    | `String`       |
+| [JsonResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/JsonResponseListener.java)      | 会以 JsonMap 对象格式返回服务器响应的 json 数据      | `JsonMap`      |
+| [OpenAIAPIResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/OpenAIAPIResponseListener.java) | 支持流式标准 OpenAI API 请求返回的经过处理格式化后的文本数据 | `String`       |
+| [BaseResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BaseResponseListener.java)      | 仅返回原始的 okHttp 的 ResponseBody 用于自行处理  | `ResponseBody` |
+| [BitmapResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BitmapResponseListener.java)    | 会以位图 Bitmap 格式的返回服务器响应的数据            | `Bitmap`       |
 
 ### 添加参数
 
