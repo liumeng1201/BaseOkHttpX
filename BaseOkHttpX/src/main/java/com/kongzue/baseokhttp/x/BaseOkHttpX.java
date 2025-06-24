@@ -1,5 +1,6 @@
 package com.kongzue.baseokhttp.x;
 
+import com.kongzue.baseokhttp.x.interfaces.BaseResponseInterceptListener;
 import com.kongzue.baseokhttp.x.interfaces.HeaderInterceptListener;
 import com.kongzue.baseokhttp.x.interfaces.ParameterInterceptListener;
 import com.kongzue.baseokhttp.x.interfaces.ResponseInterceptListener;
@@ -42,7 +43,7 @@ public class BaseOkHttpX {
     public static boolean httpRequestDetailsLogs = false;
 
     // 全局拦截器
-    public static ResponseInterceptListener responseInterceptListener;
+    public static BaseResponseInterceptListener responseInterceptListener;
 
     // 全局参数拦截器
     public static ParameterInterceptListener parameterInterceptListener;

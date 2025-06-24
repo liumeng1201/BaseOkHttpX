@@ -6,18 +6,18 @@ import java.io.IOException;
 
 import okhttp3.ResponseBody;
 
-public abstract class ResponseInterceptListener implements BaseResponseInterceptListener {
+public abstract class BytesResponseInterceptListener implements BaseResponseInterceptListener {
 
     @Override
     @Deprecated
     public boolean onIntercept(BaseHttpRequest httpRequest, ResponseBody response, Exception error) {
         try {
-            String result = response.string();
+            byte[] result = response.bytes();
             return onIntercept(httpRequest, result, error);
         } catch (IOException e) {
-            return onIntercept(httpRequest, "", e);
+            return onIntercept(httpRequest, new byte[]{}, e);
         }
     }
 
-    public abstract boolean onIntercept(BaseHttpRequest httpRequest, String response, Exception error);
+    public abstract boolean onIntercept(BaseHttpRequest httpRequest, byte[] response, Exception error);
 }

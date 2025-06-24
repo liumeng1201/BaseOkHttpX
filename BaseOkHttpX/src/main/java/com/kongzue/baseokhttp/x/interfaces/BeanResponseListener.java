@@ -8,7 +8,7 @@ import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 
 import java.lang.reflect.ParameterizedType;
 
-public abstract class BeanResponseListener<T> implements ResponseListener {
+public abstract class BeanResponseListener<T> extends ResponseListener {
 
     @Override
     public void response(BaseHttpRequest httpRequest, String response, Exception error) {

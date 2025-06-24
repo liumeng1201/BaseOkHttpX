@@ -1,8 +1,5 @@
 package com.kongzue.baseokhttp.x.util;
 
-import android.util.Log;
-
-import com.kongzue.baseokhttp.x.BaseOkHttpX;
 import com.kongzue.baseokhttp.x.interfaces.ResponseListener;
 
 import java.util.ArrayList;

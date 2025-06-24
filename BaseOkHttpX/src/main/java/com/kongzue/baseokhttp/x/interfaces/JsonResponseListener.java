@@ -4,7 +4,7 @@ import com.kongzue.baseokhttp.util.JsonMap;
 import com.kongzue.baseokhttp.x.exceptions.DecodeJsonException;
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 
-public abstract class JsonResponseListener implements ResponseListener {
+public abstract class JsonResponseListener extends ResponseListener {
 
     @Override
     public void response(BaseHttpRequest httpRequest, String response, Exception error) {

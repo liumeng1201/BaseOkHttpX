@@ -19,8 +19,8 @@ import com.kongzue.baseokhttp.util.JsonMap;
 import com.kongzue.baseokhttp.x.BaseOkHttpX;
 import com.kongzue.baseokhttp.x.exceptions.RequestException;
 import com.kongzue.baseokhttp.x.exceptions.TimeOutException;
+import com.kongzue.baseokhttp.x.interfaces.BaseResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.DownloadListener;
-import com.kongzue.baseokhttp.x.interfaces.ResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.UploadListener;
 
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
@@ -82,7 +83,7 @@ public class BaseHttpRequest {
     protected REQUEST_BODY_TYPE requestBodyType;                //请求体类型
 
     protected String url;
-    protected List<ResponseListener> callbacks = new ArrayList<>();
+    protected List<BaseResponseListener> callbacks = new ArrayList<>();
     protected Proxy proxy;
     protected OkHttpClient okHttpClient;
     protected long timeoutDuration = BaseOkHttpX.globalTimeOutDuration;     //请求超时（秒）
@@ -104,7 +105,7 @@ public class BaseHttpRequest {
 
     protected boolean requesting;
 
-    public void go(ResponseListener callback) {
+    public void go(BaseResponseListener callback) {
         registerCallback(callback);
         go();
     }
@@ -169,7 +170,6 @@ public class BaseHttpRequest {
                         try (ResponseBody responseBody = response.body();
                              BufferedReader reader = new BufferedReader(
                                      new InputStreamReader(responseBody.byteStream()))) {
-
                             if (isShowLogs()) {
                                 LockLog.Builder logBuilder = LockLog.Builder.create()
                                         .i("<<<", "-------------------------------------")
@@ -182,7 +182,7 @@ public class BaseHttpRequest {
                             }
                             String line;
                             while ((line = reader.readLine()) != null) {
-                                onStream(line);
+                                onStream(line,responseBody.contentType());
                             }
                             if (isShowLogs()) {
                                 LockLog.logI("<<<", "=====================================");
@@ -207,18 +207,19 @@ public class BaseHttpRequest {
         }
     }
 
-    private void onStream(String line) {
+    private void onStream(String line, MediaType mediaType) {
         deleteRequestInfo(requestInfo);
         if (isShowLogs()) {
             LockLog.logI("<<<", line);
         }
+        ResponseBody responseBody = ResponseBody.create(line.getBytes(), mediaType);
         if (callbackInMainLooper) {
             Looper mainLooper = Looper.getMainLooper();
             handler = new Handler(mainLooper);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    callCallbacks(line, null);
+                    callCallbacks(responseBody, null);
                 }
             });
         } else {
@@ -226,11 +227,11 @@ public class BaseHttpRequest {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        callCallbacks(line, null);
+                        callCallbacks(responseBody, null);
                     }
                 });
             } else {
-                callCallbacks(line, null);
+                callCallbacks(responseBody, null);
             }
         }
     }
@@ -240,7 +241,11 @@ public class BaseHttpRequest {
         try {
             if (downloadFile == null) {
                 ResponseBody body = response.body();
-                String result = body == null ? "" : body.string();
+                byte[] responseBytes = body.bytes();
+                MediaType mediaType = body.contentType();
+                String charset = mediaType.charset(StandardCharsets.UTF_8).name();
+                String result = new String(responseBytes, charset);
+                ResponseBody resultBody = ResponseBody.create(responseBytes, mediaType);
 
                 if (isShowLogs()) {
                     LockLog.Builder logBuilder = LockLog.Builder.create()
@@ -267,7 +272,7 @@ public class BaseHttpRequest {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            callCallbacks(result, null);
+                            callCallbacks(resultBody, null);
                         }
                     });
                 } else {
@@ -275,11 +280,11 @@ public class BaseHttpRequest {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                callCallbacks(result, null);
+                                callCallbacks(resultBody, null);
                             }
                         });
                     } else {
-                        callCallbacks(result, null);
+                        callCallbacks(resultBody, null);
                     }
                 }
             } else {
@@ -304,12 +309,12 @@ public class BaseHttpRequest {
         }
     }
 
-    private void callCallbacks(String result, Exception e) {
+    private void callCallbacks(ResponseBody result, Exception e) {
         if (BaseOkHttpX.responseInterceptListener != null &&
                 BaseOkHttpX.responseInterceptListener.onIntercept(BaseHttpRequest.this, result, e)) {
             return;
         }
-        for (ResponseListener callback : callbacks) {
+        for (BaseResponseListener callback : callbacks) {
             callback.response(BaseHttpRequest.this, result, e);
         }
     }
@@ -805,25 +810,25 @@ public class BaseHttpRequest {
         }
     }
 
-    public BaseHttpRequest registerCallback(ResponseListener callback) {
+    public BaseHttpRequest registerCallback(BaseResponseListener callback) {
         callbacks.add(callback);
         return this;
     }
 
-    public BaseHttpRequest setCallback(ResponseListener callback) {
+    public BaseHttpRequest setCallback(BaseResponseListener callback) {
         return registerCallback(callback);
     }
 
-    public BaseHttpRequest addCallback(ResponseListener callback) {
+    public BaseHttpRequest addCallback(BaseResponseListener callback) {
         return registerCallback(callback);
     }
 
-    public BaseHttpRequest unregisterCallback(ResponseListener callback) {
+    public BaseHttpRequest unregisterCallback(BaseResponseListener callback) {
         callbacks.remove(callback);
         return this;
     }
 
-    public BaseHttpRequest removeCallback(ResponseListener callback) {
+    public BaseHttpRequest removeCallback(BaseResponseListener callback) {
         return unregisterCallback(callback);
     }
 
@@ -832,7 +837,7 @@ public class BaseHttpRequest {
         return this;
     }
 
-    public List<ResponseListener> getCallbacks() {
+    public List<BaseResponseListener> getCallbacks() {
         return callbacks;
     }
 

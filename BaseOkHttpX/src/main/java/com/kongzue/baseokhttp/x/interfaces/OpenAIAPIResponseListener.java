@@ -6,7 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class OpenAIAPIResponseListener implements ResponseListener {
+public class OpenAIAPIResponseListener extends ResponseListener {
 
     StringBuilder resultBuilder = new StringBuilder();
     boolean isFinish;

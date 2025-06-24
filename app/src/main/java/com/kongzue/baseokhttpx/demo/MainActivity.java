@@ -6,7 +6,6 @@ import static com.kongzue.baseokhttp.x.Post.postRequest;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,11 +18,8 @@ import com.kongzue.baseokhttp.x.Post;
 import com.kongzue.baseokhttp.x.interfaces.DownloadListener;
 import com.kongzue.baseokhttp.x.interfaces.JsonResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.OpenAIAPIResponseListener;
-import com.kongzue.baseokhttp.x.interfaces.ParameterInterceptListener;
-import com.kongzue.baseokhttp.x.interfaces.UploadListener;
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 import com.kongzue.baseokhttp.x.util.LockLog;
-import com.kongzue.baseokhttp.x.util.Parameter;
 import com.kongzue.baseokhttpx.demo.databinding.ActivityMainBinding;
 
 import java.io.File;
