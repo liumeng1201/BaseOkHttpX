@@ -58,6 +58,7 @@
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="#64000000"
             android:layout_weight="1">
 
             <HorizontalScrollView
@@ -66,17 +67,26 @@
                 android:fillViewport="true"
                 android:nestedScrollingEnabled="true">
 
-                <TextView
-                    android:id="@+id/txt_result"
+                <FrameLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="#64000000"
-                    android:padding="5dp"
-                    android:text=""
-                    android:textColor="#fff"
-                    android:textIsSelectable="true"
-                    android:textSize="12dp"
-                    android:typeface="monospace" />
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/txt_result"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="5dp"
+                        android:text=""
+                        android:textColor="#fff"
+                        android:textIsSelectable="true"
+                        android:textSize="12dp"
+                        android:typeface="monospace" />
+
+                    <ImageView
+                        android:id="@+id/img_result"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </FrameLayout>
 
             </HorizontalScrollView>
 
@@ -96,6 +106,14 @@
                 android:textStyle="bold"
                 android:padding="10dp"/>
 
+            <Switch
+                android:id="@+id/switch_show_logs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:checked="true"
+                android:text="开"/>
+
             <ImageView
                 android:id="@+id/btn_clean_logs"
                 android:layout_width="45dp"
@@ -107,6 +125,7 @@
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="#64000000"
             android:layout_weight="1">
 
             <HorizontalScrollView
@@ -119,7 +138,6 @@
                     android:id="@+id/txt_logs"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="#64000000"
                     android:padding="5dp"
                     android:text=""
                     android:textColor="#fff"
@@ -185,6 +203,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="GPT测试"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/btn_bitmap_test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="图片测试"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"

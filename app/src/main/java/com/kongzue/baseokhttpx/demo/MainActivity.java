@@ -4,9 +4,11 @@ import static com.kongzue.baseokhttp.x.Get.getRequest;
 import static com.kongzue.baseokhttp.x.Post.postRequest;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.CompoundButton;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -15,6 +17,7 @@ import com.kongzue.baseokhttp.util.JsonMap;
 import com.kongzue.baseokhttp.x.BaseOkHttpX;
 import com.kongzue.baseokhttp.x.Get;
 import com.kongzue.baseokhttp.x.Post;
+import com.kongzue.baseokhttp.x.interfaces.BitmapResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.DownloadListener;
 import com.kongzue.baseokhttp.x.interfaces.JsonResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.OpenAIAPIResponseListener;
@@ -23,6 +26,8 @@ import com.kongzue.baseokhttp.x.util.LockLog;
 import com.kongzue.baseokhttpx.demo.databinding.ActivityMainBinding;
 
 import java.io.File;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,23 +48,7 @@ public class MainActivity extends AppCompatActivity {
         //BaseOkHttpX.globalParameter = new Parameter().add("t1", "v1");
 
         // 日志拦截器测试
-        LockLog.logListener = new LockLog.LogListener() {
-
-            @Override
-            public void log(LockLog.LogBody.LEVEL level, String logs) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (historyLogs == null) {
-                            historyLogs = logs;
-                        } else {
-                            historyLogs = historyLogs + "\n" + logs;
-                        }
-                        binding.txtLogs.setText(historyLogs);
-                    }
-                });
-            }
-        };
+        LockLog.logListener = logListener;
 
         // 参数拦截器测试
 //        BaseOkHttpX.parameterInterceptListener = new ParameterInterceptListener() {
@@ -81,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
                         .setCallback(new JsonResponseListener() {
                             @Override
                             public void onResponse(BaseHttpRequest httpRequest, JsonMap main, Exception error) {
+                                binding.imgResult.setVisibility(View.GONE);
+                                binding.txtResult.setVisibility(View.VISIBLE);
                                 binding.txtResult.setText(main.toString(4));
                             }
                         })
@@ -99,6 +90,8 @@ public class MainActivity extends AppCompatActivity {
                         .go(new JsonResponseListener() {
                             @Override
                             public void onResponse(BaseHttpRequest httpRequest, JsonMap main, Exception error) {
+                                binding.imgResult.setVisibility(View.GONE);
+                                binding.txtResult.setVisibility(View.VISIBLE);
                                 binding.txtResult.setText(main.toString(4));
                             }
                         });
@@ -111,12 +104,35 @@ public class MainActivity extends AppCompatActivity {
                 File cacheFile = new File(getCacheDir(), "downloadTest.apk");
                 getRequest(MainActivity.this, "https://dl.coolapk.com/down?pn=com.coolapk.market&id=NDU5OQ&h=46bb9d98&from=from-web")
                         .downloadToFile(cacheFile, new DownloadListener() {
+
                             @Override
                             public void onDownload(BaseHttpRequest httpRequest, File downloadFile, float progress, long current, long total, boolean done) {
-
+                                binding.imgResult.setVisibility(View.GONE);
+                                binding.txtResult.setVisibility(View.VISIBLE);
+                                String progressText = (done ? "下载完毕：" : "正在下载：") + " 进度：" + new BigDecimal(progress).setScale(4, RoundingMode.HALF_UP).toPlainString() + " 总共：" + total + " 已完成：" + current;
+                                if (binding.txtResult.getText().length() == 0) {
+                                    binding.txtResult.setText(progressText);
+                                } else {
+                                    binding.txtResult.append("\n" + progressText);
+                                }
                             }
                         })
                         .go();
+            }
+        });
+
+        binding.btnBitmapTest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getRequest("https://raw.githubusercontent.com/kongzue/BaseOkHttpX/refs/heads/main/readme/baseokhttpx.png")
+                        .go(new BitmapResponseListener() {
+                            @Override
+                            public void response(BaseHttpRequest httpRequest, Bitmap response, Exception error) {
+                                binding.imgResult.setVisibility(View.VISIBLE);
+                                binding.txtResult.setVisibility(View.GONE);
+                                binding.imgResult.setImageBitmap(response);
+                            }
+                        });
             }
         });
 
@@ -160,10 +176,37 @@ public class MainActivity extends AppCompatActivity {
                         .go(new OpenAIAPIResponseListener() {
                             @Override
                             public void onResponse(BaseHttpRequest httpRequest, String subText, String fullResponseText, Exception error, boolean isFinish) {
+                                binding.imgResult.setVisibility(View.GONE);
+                                binding.txtResult.setVisibility(View.VISIBLE);
                                 binding.txtResult.append(subText);
                             }
                         });
             }
         });
+
+        binding.switchShowLogs.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                LockLog.logListener = isChecked ? logListener : null;
+            }
+        });
     }
+
+    LockLog.LogListener logListener = new LockLog.LogListener() {
+
+        @Override
+        public void log(LockLog.LogBody.LEVEL level, String logs) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (historyLogs == null) {
+                        historyLogs = logs;
+                    } else {
+                        historyLogs = historyLogs + "\n" + logs;
+                    }
+                    binding.txtLogs.setText(historyLogs);
+                }
+            });
+        }
+    };
 }
