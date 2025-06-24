@@ -269,7 +269,7 @@ public class Parameter extends TreeMap<String, Object> {
             result = Float.parseFloat(get(key) + "");
         } catch (Exception e) {
         }
-        return emptyValue;
+        return result;
     }
 
     private boolean isNull(String s) {
