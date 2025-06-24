@@ -1,6 +1,11 @@
-# BaseOkHttpX
+<div align=center>    
+    <img src="https://github.com/kongzue/BaseOkHttpX/raw/master/readme/baseokhttpx.png" width="150">    
+    <center><h1>Kongzue BaseOkHttpX</h1></center> 
+</div>
 
-<div>    
+基于 OkHttp 的二次封装网络请求框架，更简洁易用，符合应用开发者使用习惯，能够自动处理异步线程问题，具备丰富的扩展性，全局拦截器以及实用的日志输出控制，让网络请求变得更加简单。
+
+<div align=center>
   <a href="https://github.com/kongzue/BaseOkHttpX/">
     <img src="https://img.shields.io/badge/Kongzue%20BaseOkHttpX-Release-green.svg" alt="Kongzue BaseOkHttpX">
   </a> 
@@ -15,8 +20,6 @@
   </a>
 </div>
 
-基于 OkHttp 的二次封装网络请求框架，更简洁易用，符合应用开发者使用习惯，能够自动处理异步线程问题，具备丰富的扩展性，全局拦截器以及实用的日志输出控制，让网络请求变得更加简单。
-
 ## BaseOkHttpX 优势
 
 - **全新升级：** BaseOkHttpX 是 [BaseOkHttpV3](https://github.com/kongzue/BaseOkHttpV3) 的升级重构版本，重做了因旧版代码不断迭代导致的冗余问题，代码结构更为清晰明了
@@ -28,6 +31,10 @@
 - **Json友好：** BaseOkHttpX 同样默认使用 [BaseJson](https://github.com/kongzue/BaseJson) 作为 json 请求和返回数据的处理实现，BaseJson 默认将 json 文本转换为 Map、List 对象，因此你可以轻松的直接在安卓的列表适配器中使用它们，且更易于持久化存储和读取。
 
 - **全局处理：** BaseOkHttpX 支持全局的拦截器，无论是全局请求参数、全局请求头还是全局回调拦截都可以轻松实现。
+
+## Demo
+
+[![下载Demo](https://github.com/kongzue/BaseOkHttpX/raw/master/readme/demo_download.png)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.1.0/app-release.apk)
 
 ## 如何引入项目
 
