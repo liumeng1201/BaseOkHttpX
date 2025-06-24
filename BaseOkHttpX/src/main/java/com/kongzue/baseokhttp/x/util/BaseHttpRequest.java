@@ -69,6 +69,9 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
+/**
+ * 所有 HTTP 请求的基础类，提供通用的请求能力和配置。
+ */
 public class BaseHttpRequest {
 
     public enum REQUEST_TYPE {

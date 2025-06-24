@@ -4,6 +4,9 @@ import android.content.Context;
 
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 
+/**
+ * PATCH 请求封装类。
+ */
 public class Patch extends BaseHttpRequest {
 
     public Patch(String url) {

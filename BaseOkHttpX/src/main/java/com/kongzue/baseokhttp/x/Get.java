@@ -4,6 +4,9 @@ import android.content.Context;
 
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 
+/**
+ * GET 请求封装类。
+ */
 public class Get extends BaseHttpRequest {
 
     public Get(String url) {

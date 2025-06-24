@@ -13,6 +13,9 @@ import okhttp3.Cache;
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 
+/**
+ * BaseOkHttpX 全局配置类。
+ */
 public class BaseOkHttpX {
 
     // 服务器 URL

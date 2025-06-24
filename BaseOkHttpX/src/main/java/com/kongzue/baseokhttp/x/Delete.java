@@ -4,6 +4,9 @@ import android.content.Context;
 
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 
+/**
+ * DELETE 请求封装类。
+ */
 public class Delete extends BaseHttpRequest {
 
     public Delete(String url) {

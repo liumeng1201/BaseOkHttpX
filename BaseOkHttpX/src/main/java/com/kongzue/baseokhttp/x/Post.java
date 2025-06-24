@@ -4,6 +4,9 @@ import android.content.Context;
 
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 
+/**
+ * POST 请求封装类。
+ */
 public class Post extends BaseHttpRequest {
 
     public Post(String url) {
