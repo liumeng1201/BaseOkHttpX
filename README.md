@@ -1,5 +1,5 @@
 <div align=center>    
-    <img src="https://github.com/kongzue/BaseOkHttpX/raw/master/readme/baseokhttpx.png" width="150">    
+    <img src="https://github.com/kongzue/BaseOkHttpX/blob/main/readme/baseokhttpx.png" width="150">    
     <center><h1>Kongzue BaseOkHttpX</h1></center> 
 </div>
 
@@ -34,7 +34,7 @@
 
 ## Demo
 
-[![下载Demo](https://github.com/kongzue/BaseOkHttpX/raw/master/readme/demo_download.png)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.1.0/app-release.apk)
+[![下载Demo](https://github.com/kongzue/BaseOkHttpX/blob/main/readme/demo_download.png)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.1.0/app-release.apk)
 
 ## 如何引入项目
 
