@@ -367,7 +367,7 @@ BaseOkHttpX 的日志输出会在请求发起时和返回时进行打印，通�
 FORM参数:
 customKey=customValue&ids[]=1&ids[]=2&ids[]=3&ids[]=4&ids[]=5&t1=v1
 =====================================
-tagSocket(4) with statsTag=0xffffffff, statsUid=-1
+
 -------------------------------------
 成功GET请求:https://api.apiopen.top/api/sentences?customKey=customValue&ids%5B%5D=1&ids%5B%5D=2&ids%5B%5D=3&ids%5B%5D=4&ids%5B%5D=5&t1=v1 返回时间：2025-06-18 22:45:45.783
 FORM参数:

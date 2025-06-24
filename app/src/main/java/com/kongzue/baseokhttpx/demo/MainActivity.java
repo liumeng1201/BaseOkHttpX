@@ -188,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 LockLog.logListener = isChecked ? logListener : null;
+                binding.switchShowLogs.setText(isChecked ? "开" : "关");
             }
         });
     }

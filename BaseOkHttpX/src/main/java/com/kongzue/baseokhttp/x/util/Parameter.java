@@ -281,7 +281,7 @@ public class Parameter extends TreeMap<String, Object> {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof Parameter && super.equals(o);
+        return o instanceof Parameter && toString().equals(((Parameter) o).toString());
     }
 
     public String getMimeType(File file) {
