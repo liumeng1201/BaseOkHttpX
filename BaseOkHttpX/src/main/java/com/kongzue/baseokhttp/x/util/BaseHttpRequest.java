@@ -36,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -231,13 +232,14 @@ public class BaseHttpRequest {
             LockLog.logI(TAG_RETURN, line);
         }
         ResponseBody responseBody = ResponseBody.create(line.getBytes(), mediaType);
+        ResponseBody interceptResponseBody = ResponseBody.create(line.getBytes(), mediaType);
         if (callbackInMainLooper) {
             Looper mainLooper = Looper.getMainLooper();
             handler = new Handler(mainLooper);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    callCallbacks(responseBody, null);
+                    callCallbacks(responseBody, interceptResponseBody, null);
                 }
             });
         } else {
@@ -245,11 +247,11 @@ public class BaseHttpRequest {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        callCallbacks(responseBody, null);
+                        callCallbacks(responseBody, interceptResponseBody, null);
                     }
                 });
             } else {
-                callCallbacks(responseBody, null);
+                callCallbacks(responseBody, interceptResponseBody, null);
             }
         }
     }
@@ -264,6 +266,7 @@ public class BaseHttpRequest {
                 String charset = mediaType.charset(StandardCharsets.UTF_8).name();
                 String result = new String(responseBytes, charset);
                 ResponseBody resultBody = ResponseBody.create(responseBytes, mediaType);
+                ResponseBody interceptResultBody = ResponseBody.create(responseBytes, mediaType);
 
                 if (isShowLogs()) {
                     LockLog.Builder logBuilder = LockLog.Builder.create()
@@ -290,7 +293,7 @@ public class BaseHttpRequest {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            callCallbacks(resultBody, null);
+                            callCallbacks(resultBody, interceptResultBody, null);
                         }
                     });
                 } else {
@@ -298,11 +301,11 @@ public class BaseHttpRequest {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                callCallbacks(resultBody, null);
+                                callCallbacks(resultBody, interceptResultBody, null);
                             }
                         });
                     } else {
-                        callCallbacks(resultBody, null);
+                        callCallbacks(resultBody, interceptResultBody, null);
                     }
                 }
             } else {
@@ -326,9 +329,9 @@ public class BaseHttpRequest {
         }
     }
 
-    private void callCallbacks(ResponseBody result, Exception e) {
+    private void callCallbacks(ResponseBody result, ResponseBody interceptRequestBody, Exception e) {
         if (BaseOkHttpX.responseInterceptListener != null &&
-                BaseOkHttpX.responseInterceptListener.onIntercept(BaseHttpRequest.this, result, e)) {
+                BaseOkHttpX.responseInterceptListener.onIntercept(BaseHttpRequest.this, interceptRequestBody, e)) {
             return;
         }
         for (BaseResponseListener callback : callbacks) {
@@ -366,7 +369,7 @@ public class BaseHttpRequest {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    callCallbacks(null, e);
+                    callCallbacks(null, null, e);
                 }
             });
         } else {
@@ -374,11 +377,11 @@ public class BaseHttpRequest {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        callCallbacks(null, e);
+                        callCallbacks(null, null, e);
                     }
                 });
             } else {
-                callCallbacks(null, e);
+                callCallbacks(null, null, e);
             }
         }
     }
@@ -566,7 +569,7 @@ public class BaseHttpRequest {
 
     /**
      * 获取最终请求地址。
-     *
+     * <p>
      * 当为 GET 请求时会自动拼接参数。
      *
      * @return 完整的请求地址
@@ -921,7 +924,7 @@ public class BaseHttpRequest {
 
     /**
      * 手动标记请求的执行状态。
-     *
+     * <p>
      * 当设置为 true 时会启动超时检测，false 则停止检测。
      *
      * @param requesting 是否处于请求状态
@@ -1106,7 +1109,7 @@ public class BaseHttpRequest {
     /**
      * 指定下载文件的保存路径，并设置下载监听器。
      *
-     * @param file            目标文件
+     * @param file             目标文件
      * @param downloadListener 下载进度回调
      * @return 当前请求对象
      */
