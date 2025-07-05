@@ -1,5 +1,7 @@
 package com.kongzue.baseokhttp.x.util;
 
+import static com.kongzue.baseokhttp.x.util.LockLog.TAG_RETURN;
+import static com.kongzue.baseokhttp.x.util.LockLog.TAG_SEND;
 import static com.kongzue.baseokhttp.x.util.LockLog.formatJson;
 import static com.kongzue.baseokhttp.x.util.LockLog.getExceptionInfo;
 import static com.kongzue.baseokhttp.x.util.RequestInfo.addRequestInfo;
@@ -82,16 +84,16 @@ public class BaseHttpRequest {
         STRING, JSON, FORM, FILE
     }
 
-    protected REQUEST_TYPE requestType = REQUEST_TYPE.GET;      //请求方式
-    protected REQUEST_BODY_TYPE requestBodyType;                //请求体类型
+    protected REQUEST_TYPE requestType = REQUEST_TYPE.GET;      // 请求方式
+    protected REQUEST_BODY_TYPE requestBodyType;                // 请求体类型
 
     protected String url;
     protected List<BaseResponseListener> callbacks = new ArrayList<>();
     protected Proxy proxy;
     protected OkHttpClient okHttpClient;
-    protected long timeoutDuration = BaseOkHttpX.globalTimeOutDuration;     //请求超时（秒）
-    protected boolean callbackInMainLooper;                     //强行主线程回调
-    protected boolean callAsync;                                //直接在当前线程请求
+    protected long timeoutDuration = BaseOkHttpX.globalTimeOutDuration;     // 请求超时（秒）
+    protected boolean callbackInMainLooper;                     // 强行主线程回调
+    protected boolean callAsync;                                // 直接在当前线程请求
     protected String requestMimeType = "text/plain; charset=utf-8";
 
     protected Parameter headerParameter = new Parameter(BaseOkHttpX.globalHeader);
@@ -104,7 +106,7 @@ public class BaseHttpRequest {
     protected DownloadListener downloadListener;
     protected boolean showLogs = true;
     protected String cookieStr;
-    protected boolean streamRequest;                            //流式请求
+    protected boolean streamRequest;                            // 流式请求
 
     protected boolean requesting;
 
@@ -132,15 +134,15 @@ public class BaseHttpRequest {
     public void go() {
         if (isShowLogs()) {
             LockLog.Builder logBuilder = LockLog.Builder.create()
-                    .i(">>>", "-------------------------------------")
-                    .i(">>>", "发出" + requestType.name() + "请求:" + getUrl() + " 请求时间：" + getNowTimeStr());
+                    .i(TAG_SEND, "-------------------------------------")
+                    .i(TAG_SEND, "发出" + requestType.name() + "请求:" + getUrl() + " 请求时间：" + getNowTimeStr());
             if (!getHeaderParameter().isEmpty()) {
-                logBuilder.i(">>>", "请求头:\t" + getHeaderParameter());
+                logBuilder.i(TAG_SEND, "请求头:\t" + getHeaderParameter());
             }
             if (requestBodyType != null) {
-                logBuilder.i(">>>", requestBodyType.name() + "参数:\n" + formatParameterStr());
+                logBuilder.i(TAG_SEND, requestBodyType.name() + "参数:\n" + formatParameterStr());
             }
-            logBuilder.i(">>>", "=====================================")
+            logBuilder.i(TAG_SEND, "=====================================")
                     .build();
 
         }
@@ -153,7 +155,7 @@ public class BaseHttpRequest {
         }
         requestInfo = new RequestInfo(url, getRequestParameter());
         if (BaseOkHttpX.disallowSameRequest && equalsRequestInfo(requestInfo) != null) {
-            LockLog.logE("<<<", "拦截重复请求:" + requestInfo);
+            LockLog.logE(TAG_RETURN, "拦截重复请求:" + requestInfo);
             return;
         }
         addRequestInfo(requestInfo);
@@ -185,12 +187,12 @@ public class BaseHttpRequest {
                                          new InputStreamReader(responseBody.byteStream()))) {
                                 if (isShowLogs()) {
                                     LockLog.Builder logBuilder = LockLog.Builder.create()
-                                            .i("<<<", "-------------------------------------")
-                                            .i("<<<", "成功" + requestType.name() + "请求:" + getUrl() + " 返回时间：" + getNowTimeStr());
+                                            .i(TAG_RETURN, "-------------------------------------")
+                                            .i(TAG_RETURN, "成功" + requestType.name() + "请求:" + getUrl() + " 返回时间：" + getNowTimeStr());
                                     if (requestBodyType != null) {
-                                        logBuilder.i("<<<", requestBodyType.name() + "参数:\n" + formatParameterStr());
+                                        logBuilder.i(TAG_RETURN, requestBodyType.name() + "参数:\n" + formatParameterStr());
                                     }
-                                    logBuilder.i("<<<", "返回内容:");
+                                    logBuilder.i(TAG_RETURN, "返回内容:");
                                     logBuilder.build();
                                 }
                                 String line;
@@ -198,7 +200,7 @@ public class BaseHttpRequest {
                                     onStream(line, responseBody.contentType());
                                 }
                                 if (isShowLogs()) {
-                                    LockLog.logI("<<<", "=====================================");
+                                    LockLog.logI(TAG_RETURN, "=====================================");
                                 }
                                 setRequesting(false);
                             }
@@ -226,7 +228,7 @@ public class BaseHttpRequest {
     private void onStream(String line, MediaType mediaType) {
         deleteRequestInfo(requestInfo);
         if (isShowLogs()) {
-            LockLog.logI("<<<", line);
+            LockLog.logI(TAG_RETURN, line);
         }
         ResponseBody responseBody = ResponseBody.create(line.getBytes(), mediaType);
         if (callbackInMainLooper) {
@@ -265,20 +267,20 @@ public class BaseHttpRequest {
 
                 if (isShowLogs()) {
                     LockLog.Builder logBuilder = LockLog.Builder.create()
-                            .i("<<<", "-------------------------------------")
-                            .i("<<<", "成功" + requestType.name() + "请求:" + getUrl() + " 返回时间：" + getNowTimeStr());
+                            .i(TAG_RETURN, "-------------------------------------")
+                            .i(TAG_RETURN, "成功" + requestType.name() + "请求:" + getUrl() + " 返回时间：" + getNowTimeStr());
                     if (requestBodyType != null) {
-                        logBuilder.i("<<<", requestBodyType.name() + "参数:\n" + formatParameterStr());
+                        logBuilder.i(TAG_RETURN, requestBodyType.name() + "参数:\n" + formatParameterStr());
                     }
-                    logBuilder.i("<<<", "返回内容:");
+                    logBuilder.i(TAG_RETURN, "返回内容:");
 
                     List<LockLog.LogBody> logBodyList = formatJson(result);
                     if (logBodyList == null) {
-                        logBuilder.i("<<<", result);
+                        logBuilder.i(TAG_RETURN, result);
                     } else {
                         logBuilder.add(logBodyList);
                     }
-                    logBuilder.i("<<<", "=====================================");
+                    logBuilder.i(TAG_RETURN, "=====================================");
                     logBuilder.build();
                 }
 
@@ -337,15 +339,15 @@ public class BaseHttpRequest {
     private void onFail(Exception e) {
         if (isShowLogs()) {
             LockLog.Builder logBuilder = LockLog.Builder.create()
-                    .i("<<<", "-------------------------------------")
-                    .i("<<<", "失败" + requestType.name() + "请求:" + getUrl() + " 失败时间：" + getNowTimeStr());
+                    .i(TAG_RETURN, "-------------------------------------")
+                    .i(TAG_RETURN, "失败" + requestType.name() + "请求:" + getUrl() + " 失败时间：" + getNowTimeStr());
 
             if (requestBodyType != null) {
-                logBuilder.i("<<<", requestBodyType.name() + "参数:\n" + formatParameterStr());
+                logBuilder.i(TAG_RETURN, requestBodyType.name() + "参数:\n" + formatParameterStr());
             }
-            logBuilder.i("<<<", "错误信息:")
-                    .e("<<<", getExceptionInfo(e))
-                    .i("<<<", "=====================================")
+            logBuilder.i(TAG_RETURN, "错误信息:")
+                    .e(TAG_RETURN, getExceptionInfo(e))
+                    .i(TAG_RETURN, "=====================================")
                     .build();
         }
         deleteRequestInfo(requestInfo);
@@ -353,7 +355,7 @@ public class BaseHttpRequest {
             String nextServiceUrl = findNextServiceUrl(BaseOkHttpX.reserveServiceUrls, BaseOkHttpX.serviceUrl);
             if (!isNull(nextServiceUrl)) {
                 BaseOkHttpX.serviceUrl = nextServiceUrl;
-                LockLog.logI("<<<", "尝试切换容灾服务器地址：" + nextServiceUrl + " 重新请求...");
+                LockLog.logI(TAG_RETURN, "尝试切换容灾服务器地址：" + nextServiceUrl + " 重新请求...");
                 go();
                 return;
             }
@@ -495,7 +497,7 @@ public class BaseHttpRequest {
 
     private void callDownloadingCallback(float progress, long sum, long total) {
         if (getDownloadListener() == null) return;
-        LockLog.logI("<<<", "下载：" + getUrl() + " 进度：" + progress + " 已下载：" + sum + " 总共：" + total);
+        LockLog.logI(TAG_RETURN, "下载：" + getUrl() + " 进度：" + progress + " 已下载：" + sum + " 总共：" + total);
         if (callbackInMainLooper) {
             Looper mainLooper = Looper.getMainLooper();
             handler = new Handler(mainLooper);
@@ -713,7 +715,7 @@ public class BaseHttpRequest {
     }
 
     protected void log(String data) {
-        Log.i(">>>", data);
+        Log.i(TAG_SEND, data);
     }
 
     /**

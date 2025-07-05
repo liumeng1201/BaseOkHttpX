@@ -23,6 +23,9 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class LockLog {
 
+    public static String TAG_RETURN = "<<<";
+    public static String TAG_SEND = ">>>";
+
     private static final BlockingQueue<LogBody> logQueue = new LinkedBlockingQueue<>();
     /**
      * 日志回调监听
@@ -126,7 +129,7 @@ public class LockLog {
          * 获取日志标签
          */
         public String getTag() {
-            return tag == null ? ">>>" : tag;
+            return tag == null ? TAG_SEND : tag;
         }
 
         /**
@@ -244,7 +247,7 @@ public class LockLog {
         String[] lines = message.split("\n");
         List<LogBody> logBodyList = new ArrayList<>();
         for (String line : lines) {
-            logBodyList.add(new LogBody(LogBody.LEVEL.INFO, "<<<<<<", line));
+            logBodyList.add(new LogBody(LogBody.LEVEL.INFO, TAG_RETURN, line));
         }
         return logBodyList;
     }
