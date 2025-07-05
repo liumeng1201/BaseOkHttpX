@@ -415,6 +415,9 @@ BaseOkHttpX 刚刚完成，还有部分不足，以下是一个待办清单，�
 - WebSocket 支持
 - 其他类型的请求结果
 ```
+## 观星者
+
+[![Stargazers over time](https://starchart.cc/kongzue/BaseOkHttpX.svg?a=19)]([https://starchart.cc/kongzue/BaseOkHttpX](https://github.com/kongzue/BaseOkHttpX/stargazers))
 
 ## 开源协议
 
