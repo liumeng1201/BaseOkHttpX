@@ -380,14 +380,14 @@ OpenAIAPIResponseListener(){
 BaseOkHttpX 支持同时发起多个请求，在统一回调中一并处理请求结果，因多个请求耗费时长长短不一，BaseOkHttpX 会在最后一个请求返回后执行统一回调。举例如下：
 
 ```java
-Get.create("/api/sentences")									// 创建主请求
-        .with(Post.create("/api/login")				// 创建并行请求1
+Get.create("/api/sentences")                     // 创建主请求
+        .with(Post.create("/api/login")			 // 创建并行请求1
                 .setParameter(new JsonMap()
                         .set("account", "username")
                         .set("password", "123456")
                 ))
-        .with(Get.create("/api/sentences"))		// 创建并行请求2
-        .go(new MultiResponseListener() {			// 发起请求，使用统一回调处理
+        .with(Get.create("/api/sentences"))		 // 创建并行请求2
+        .go(new MultiResponseListener() {		 // 发起请求，使用统一回调处理
             @Override
             public void response(BaseHttpRequest[] httpRequest, String[] response, Exception[] errors) {
                 StringBuilder stringBuilder = new StringBuilder();
