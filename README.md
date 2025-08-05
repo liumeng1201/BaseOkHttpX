@@ -36,7 +36,7 @@
 
 ## Demo
 
-[![下载Demo](https://github.com/kongzue/BaseOkHttpX/blob/main/readme/demo_download.png?raw=true&demo=v1.2.1.3)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.2.1/app-release.apk)
+[![下载Demo](https://github.com/kongzue/BaseOkHttpX/blob/main/readme/demo_download.png?raw=true&demo=v1.2.1.3)](https://github.com/kongzue/BaseOkHttpX/releases/download/1.2.4/app-release.apk)
 
 ## 如何引入项目
 
