@@ -20,6 +20,7 @@ import com.kongzue.baseokhttp.x.Post;
 import com.kongzue.baseokhttp.x.interfaces.BitmapResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.DownloadListener;
 import com.kongzue.baseokhttp.x.interfaces.JsonResponseListener;
+import com.kongzue.baseokhttp.x.interfaces.MultiResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.OpenAIAPIResponseListener;
 import com.kongzue.baseokhttp.x.util.BaseHttpRequest;
 import com.kongzue.baseokhttp.x.util.LockLog;
@@ -44,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
 
         BaseOkHttpX.serviceUrl = "https://api.apiopen.top/";
         BaseOkHttpX.reserveServiceUrls = new String[]{"https://api.apiopen2.top/", "https://api.apiopen3.top/", "https://api.apiopen4.top/"};
-        BaseOkHttpX.disallowSameRequest = true;
         //BaseOkHttpX.globalParameter = new Parameter().add("t1", "v1");
 
         // 日志拦截器测试
@@ -189,6 +189,32 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 LockLog.logListener = isChecked ? logListener : null;
                 binding.switchShowLogs.setText(isChecked ? "开" : "关");
+            }
+        });
+
+        binding.btnMultiTest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Get.create("/api/sentences")
+                        .with(Post.create("/api/login")
+                                .setParameter(new JsonMap()
+                                        .set("account", "username")
+                                        .set("password", "123456")
+                                ))
+                        .with(Get.create("/api/sentences"))
+                        .go(new MultiResponseListener() {
+                            @Override
+                            public void response(BaseHttpRequest[] httpRequest, String[] response, Exception[] errors) {
+                                binding.txtResult.setVisibility(View.VISIBLE);
+                                binding.imgResult.setVisibility(View.GONE);
+
+                                StringBuilder stringBuilder = new StringBuilder();
+                                for (int i = 0; i < httpRequest.length; i++) {
+                                    stringBuilder.append("请求").append(i + 1).append("：").append(httpRequest[i].getSubUrl()).append("\n请求结果：\n").append(errors[i] == null ? response[i] : errors[i]).append("\n\n");
+                                }
+                                binding.txtResult.setText(stringBuilder.toString());
+                            }
+                        });
             }
         });
     }

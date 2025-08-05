@@ -13,14 +13,18 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LifecycleRegistry;
 
 import com.kongzue.baseokhttp.util.JsonMap;
 import com.kongzue.baseokhttp.x.BaseOkHttpX;
 import com.kongzue.baseokhttp.x.exceptions.RequestException;
+import com.kongzue.baseokhttp.x.exceptions.SameRequestException;
 import com.kongzue.baseokhttp.x.exceptions.TimeOutException;
+import com.kongzue.baseokhttp.x.interfaces.BaseMultiResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.BaseResponseListener;
 import com.kongzue.baseokhttp.x.interfaces.DownloadListener;
 import com.kongzue.baseokhttp.x.interfaces.UploadListener;
@@ -36,7 +40,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -45,10 +48,13 @@ import java.security.cert.CertificateFactory;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +81,7 @@ import okhttp3.ResponseBody;
 /**
  * 所有 HTTP 请求的基础类，提供通用的请求能力和配置。
  */
-public class BaseHttpRequest {
+public class BaseHttpRequest implements LifecycleOwner {
 
     public enum REQUEST_TYPE {
         GET, POST, PUT, DELETE, PATCH
@@ -90,6 +96,7 @@ public class BaseHttpRequest {
 
     protected String url;
     protected List<BaseResponseListener> callbacks = new ArrayList<>();
+    protected List<BaseMultiResponseListener> multiResponseListenerList = new ArrayList<>();
     protected Proxy proxy;
     protected OkHttpClient okHttpClient;
     protected long timeoutDuration = BaseOkHttpX.globalTimeOutDuration;     // 请求超时（秒）
@@ -108,6 +115,7 @@ public class BaseHttpRequest {
     protected boolean showLogs = true;
     protected String cookieStr;
     protected boolean streamRequest;                            // 流式请求
+    protected LifecycleRegistry lifecycle = new LifecycleRegistry(this);
 
     protected boolean requesting;
 
@@ -121,7 +129,18 @@ public class BaseHttpRequest {
         go();
     }
 
+    /**
+     * 同时发起多个请求并注册多请求统一回调监听器
+     *
+     * @param callback 用于接收多请求统一回调的回调接口
+     */
+    public void go(BaseMultiResponseListener callback) {
+        registerMultiCallback(callback);
+        go();
+    }
+
     protected BaseHttpRequest() {
+        setLifecycleState(Lifecycle.State.INITIALIZED);
     }
 
     private Call httpCall;
@@ -133,6 +152,9 @@ public class BaseHttpRequest {
      * 根据配置自动输出日志并在请求完成后触发回调。
      */
     public void go() {
+        responseBytes = null;
+        responseMediaType = null;
+        responseException = null;
         if (isShowLogs()) {
             LockLog.Builder logBuilder = LockLog.Builder.create()
                     .i(TAG_SEND, "-------------------------------------")
@@ -148,6 +170,9 @@ public class BaseHttpRequest {
 
         }
         OkHttpClient client = okHttpClient == null ? createClient() : okHttpClient;
+
+        setLifecycleState(Lifecycle.State.CREATED);
+
         Request request = createRequest();
         httpCall = client.newCall(request);
         if (handler == null) {
@@ -157,6 +182,7 @@ public class BaseHttpRequest {
         requestInfo = new RequestInfo(url, getRequestParameter());
         if (BaseOkHttpX.disallowSameRequest && equalsRequestInfo(requestInfo) != null) {
             LockLog.logE(TAG_RETURN, "拦截重复请求:" + requestInfo);
+            onFail(new SameRequestException( requestInfo));
             return;
         }
         addRequestInfo(requestInfo);
@@ -206,14 +232,22 @@ public class BaseHttpRequest {
                                 setRequesting(false);
                             }
                         } else {
-                            setRequesting(false);
                             onFinish(response);
+                            setRequesting(false);
                         }
                     } finally {
                         response.close();
                     }
                 }
             });
+        }
+
+        if (multiRequestList != null) {
+            for (BaseHttpRequest otherRequest : multiRequestList) {
+                if (otherRequest.getLifecycle().getCurrentState() == Lifecycle.State.INITIALIZED) {
+                    otherRequest.go();
+                }
+            }
         }
     }
 
@@ -231,15 +265,15 @@ public class BaseHttpRequest {
         if (isShowLogs()) {
             LockLog.logI(TAG_RETURN, line);
         }
-        ResponseBody responseBody = ResponseBody.create(line.getBytes(), mediaType);
-        ResponseBody interceptResponseBody = ResponseBody.create(line.getBytes(), mediaType);
+        this.responseMediaType = mediaType;
+        this.responseBytes = line.getBytes();
         if (callbackInMainLooper) {
             Looper mainLooper = Looper.getMainLooper();
             handler = new Handler(mainLooper);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    callCallbacks(responseBody, interceptResponseBody, null);
+                    callCallbacks();
                 }
             });
         } else {
@@ -247,26 +281,28 @@ public class BaseHttpRequest {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        callCallbacks(responseBody, interceptResponseBody, null);
+                        callCallbacks();
                     }
                 });
             } else {
-                callCallbacks(responseBody, interceptResponseBody, null);
+                callCallbacks();
             }
         }
     }
+
+    private byte[] responseBytes;
+    private MediaType responseMediaType;
+    private Exception responseException;
 
     private void onFinish(Response response) {
         deleteRequestInfo(requestInfo);
         try (Response r = response) {
             if (downloadFile == null) {
                 ResponseBody body = r.body();
-                byte[] responseBytes = body.bytes();
-                MediaType mediaType = body.contentType();
-                String charset = mediaType.charset(StandardCharsets.UTF_8).name();
+                responseBytes = body.bytes();
+                responseMediaType = body.contentType();
+                String charset = responseMediaType.charset(StandardCharsets.UTF_8).name();
                 String result = new String(responseBytes, charset);
-                ResponseBody resultBody = ResponseBody.create(responseBytes, mediaType);
-                ResponseBody interceptResultBody = ResponseBody.create(responseBytes, mediaType);
 
                 if (isShowLogs()) {
                     LockLog.Builder logBuilder = LockLog.Builder.create()
@@ -293,7 +329,7 @@ public class BaseHttpRequest {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            callCallbacks(resultBody, interceptResultBody, null);
+                            callCallbacks();
                         }
                     });
                 } else {
@@ -301,11 +337,11 @@ public class BaseHttpRequest {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                callCallbacks(resultBody, interceptResultBody, null);
+                                callCallbacks();
                             }
                         });
                     } else {
-                        callCallbacks(resultBody, interceptResultBody, null);
+                        callCallbacks();
                     }
                 }
             } else {
@@ -329,17 +365,20 @@ public class BaseHttpRequest {
         }
     }
 
-    private void callCallbacks(ResponseBody result, ResponseBody interceptRequestBody, Exception e) {
+    private void callCallbacks() {
+        ResponseBody interceptRequestBody = ResponseBody.create(responseBytes, responseMediaType);
         if (BaseOkHttpX.responseInterceptListener != null &&
-                BaseOkHttpX.responseInterceptListener.onIntercept(BaseHttpRequest.this, interceptRequestBody, e)) {
+                BaseOkHttpX.responseInterceptListener.onIntercept(BaseHttpRequest.this, interceptRequestBody, responseException)) {
             return;
         }
         for (BaseResponseListener callback : callbacks) {
-            callback.response(BaseHttpRequest.this, result, e);
+            ResponseBody result = ResponseBody.create(responseBytes, responseMediaType);
+            callback.response(BaseHttpRequest.this, result, responseException);
         }
     }
 
     private void onFail(Exception e) {
+        responseException = e;
         if (isShowLogs()) {
             LockLog.Builder logBuilder = LockLog.Builder.create()
                     .i(TAG_RETURN, "-------------------------------------")
@@ -369,7 +408,7 @@ public class BaseHttpRequest {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    callCallbacks(null, null, e);
+                    callCallbacks();
                 }
             });
         } else {
@@ -377,11 +416,11 @@ public class BaseHttpRequest {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        callCallbacks(null, null, e);
+                        callCallbacks();
                     }
                 });
             } else {
-                callCallbacks(null, null, e);
+                callCallbacks();
             }
         }
     }
@@ -595,6 +634,15 @@ public class BaseHttpRequest {
                 return url;
             }
         }
+    }
+
+    /**
+     * 获取本次请求设置的节点请求地址
+     *
+     * @return 节点请求地址
+     */
+    public String getSubUrl() {
+        return url;
     }
 
     /**
@@ -941,10 +989,12 @@ public class BaseHttpRequest {
                     }
                 }
             }, timeoutDuration * 1000);
+            setLifecycleState(Lifecycle.State.STARTED);
         } else {
             if (timeoutChecker != null) {
                 timeoutChecker.cancel();
             }
+            setLifecycleState(Lifecycle.State.DESTROYED);
         }
     }
 
@@ -1022,6 +1072,20 @@ public class BaseHttpRequest {
             httpCall.cancel(); // 取消未完成的请求
             httpCall = null;
         }
+        responseBytes = null;
+        responseMediaType = null;
+        responseException = null;
+        lifecycle = new LifecycleRegistry(this);
+        setLifecycleState(Lifecycle.State.INITIALIZED);
+    }
+
+    /**
+     * 重新发起请求。
+     *
+     */
+    public void retry() {
+        cancel();
+        go();
     }
 
     /**
@@ -1031,7 +1095,7 @@ public class BaseHttpRequest {
      * @return 当前请求对象
      */
     public BaseHttpRequest registerCallback(BaseResponseListener callback) {
-        callbacks.add(callback);
+        if (!callbacks.contains(callback)) callbacks.add(callback);
         return this;
     }
 
@@ -1084,6 +1148,62 @@ public class BaseHttpRequest {
      */
     public List<BaseResponseListener> getCallbacks() {
         return callbacks;
+    }
+
+    /**
+     * 注册一个多请求统一合并回调监听器
+     *
+     * @param callback 回调接口
+     * @return 当前请求对象
+     */
+    public BaseHttpRequest registerMultiCallback(BaseMultiResponseListener callback) {
+        if (!multiResponseListenerList.contains(callback)) multiResponseListenerList.add(callback);
+        return this;
+    }
+
+    /**
+     * 与 {@link #registerMultiCallback(BaseMultiResponseListener)} 相同。
+     */
+    public BaseHttpRequest setMultiCallback(BaseMultiResponseListener callback) {
+        registerMultiCallback(callback);
+        return this;
+    }
+
+    /**
+     * 与 {@link #registerMultiCallback(BaseMultiResponseListener)} 相同。
+     */
+    public BaseHttpRequest addMultiCallback(BaseMultiResponseListener callback) {
+        registerMultiCallback(callback);
+        return this;
+    }
+
+    /**
+     * 移除指定的多请求统一合并回调监听器
+     *
+     * @param callback 待移除的回调
+     * @return 当前请求对象
+     */
+    public BaseHttpRequest unregisterMultiCallback(BaseMultiResponseListener callback) {
+        multiResponseListenerList.remove(callback);
+        return this;
+    }
+
+    /**
+     * 与 {@link #unregisterMultiCallback(BaseMultiResponseListener)} 相同。
+     */
+    public BaseHttpRequest removeMultiCallback(BaseMultiResponseListener callback) {
+        unregisterMultiCallback(callback);
+        return this;
+    }
+
+    /**
+     * 清除所有已注册的统一合并回调监听器。
+     *
+     * @return 当前请求对象
+     */
+    public BaseHttpRequest removeAllMultiCallback() {
+        multiResponseListenerList.clear();
+        return this;
     }
 
     /**
@@ -1230,5 +1350,163 @@ public class BaseHttpRequest {
     public BaseHttpRequest setStreamRequest(boolean streamRequest) {
         this.streamRequest = streamRequest;
         return this;
+    }
+
+    /**
+     * 获取 BaseOkHttpRequest 的生命周期对象
+     *
+     * @return Lifecycle 请求流程的生命周期对象
+     */
+    @NonNull
+    @Override
+    public Lifecycle getLifecycle() {
+        return lifecycle;
+    }
+
+    protected void setLifecycleState(Lifecycle.State s) {
+        if (lifecycle == null || s == null) return;
+        try {
+            lifecycle.setCurrentState(s);
+        } catch (Exception e) {
+        }
+    }
+
+    List<BaseHttpRequest> multiRequestList;
+    List<BaseHttpRequest> multiResponseList;
+
+    /**
+     * 设置同时请求的其他 BaseOkHttpRequest 请求对象，
+     * 所有请求会一起统一合并返回，请使用 '.go(? extends BaseMultiResponseListener)' 进行统一回调处理
+     *
+     * @param request 其他 BaseOkHttpRequest 请求对象
+     * @return 当前请求对象
+     */
+    public BaseHttpRequest with(BaseHttpRequest request) {
+        if (multiRequestList == null) {
+            multiRequestList = new ArrayList<>();
+            multiRequestList.add(this);
+        }
+        if (!multiRequestList.contains(request)) multiRequestList.add(request);
+        registerMultiResult(request);
+        return this;
+    }
+
+    private void registerMultiResult(BaseHttpRequest request) {
+        if (request.getLifecycle().getCurrentState() == Lifecycle.State.DESTROYED) {
+            if (request.responseException != null || (request.responseBytes != null && request.responseMediaType != null)) {
+                if (getLifecycle().getCurrentState() == Lifecycle.State.DESTROYED) {
+                    toMultiResult(request);
+                } else {
+                    addCallback(new BaseResponseListener() {
+                        @Override
+                        public void response(BaseHttpRequest httpRequest, ResponseBody responseBody, Exception error) {
+                            toMultiResult(request);
+                        }
+                    });
+                }
+                return;
+            }
+        }
+        request.addCallback(new BaseResponseListener() {
+            @Override
+            public void response(BaseHttpRequest httpRequest, ResponseBody responseBody, Exception error) {
+                toMultiResult(httpRequest);
+            }
+        });
+        addCallback(new BaseResponseListener() {
+            @Override
+            public void response(BaseHttpRequest httpRequest, ResponseBody responseBody, Exception error) {
+                toMultiResult(httpRequest);
+            }
+        });
+    }
+
+    private void toMultiResult(BaseHttpRequest request) {
+        if (multiResponseList == null) multiResponseList = new ArrayList<>();
+        if (multiResponseList.contains(request)) return;
+        multiResponseList.add(request);
+
+        if (containsAllList(multiResponseList, multiRequestList)) {
+            BaseHttpRequest[] allRequest = new BaseHttpRequest[multiRequestList.size()];
+            Map<BaseHttpRequest, ResponseBody> responseBodyMap = new LinkedHashMap<>();
+            Map<BaseHttpRequest, Exception> errors = new LinkedHashMap<>();
+
+            for (int i = 0; i < allRequest.length; i++) {
+                allRequest[i] = multiRequestList.get(i);
+                Exception error = allRequest[i].responseException;
+                ResponseBody resultBody = allRequest[i].responseBytes == null ? null : ResponseBody.create(allRequest[i].responseBytes, allRequest[i].responseMediaType);
+                responseBodyMap.put(allRequest[i], resultBody);
+                errors.put(allRequest[i], error);
+            }
+
+            if (callbackInMainLooper) {
+                Looper mainLooper = Looper.getMainLooper();
+                handler = new Handler(mainLooper);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (BaseMultiResponseListener multiResponseListener : multiResponseListenerList) {
+                            multiResponseListener.response(allRequest, responseBodyMap, errors);
+                        }
+                    }
+                });
+            } else {
+                if (handler != null) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (BaseMultiResponseListener multiResponseListener : multiResponseListenerList) {
+                                multiResponseListener.response(allRequest, responseBodyMap, errors);
+                            }
+                        }
+                    });
+                } else {
+                    for (BaseMultiResponseListener multiResponseListener : multiResponseListenerList) {
+                        multiResponseListener.response(allRequest, responseBodyMap, errors);
+                    }
+                }
+            }
+        }
+    }
+
+    private static <T> boolean containsAllList(List<T> list1, List<T> list2) {
+        Set<T> set1 = new HashSet<>(list1);
+        return set1.containsAll(list2);
+    }
+
+    /**
+     * 在请求完成后获取服务器响应结果的请求字节
+     *
+     * @return 服务器返回的数据字节
+     */
+    public byte[] getResponseBytes() {
+        return responseBytes;
+    }
+
+    /**
+     * 在请求完成后获取服务器响应结果的媒体类型
+     *
+     * @return 服务器返回的媒体类型
+     */
+    public MediaType getResponseMediaType() {
+        return responseMediaType;
+    }
+
+    /**
+     * 在请求完成后获取服务器响应结果的错误信息
+     *
+     * @return 请求过程中抛出的异常
+     */
+    public Exception getResponseException() {
+        return responseException;
+    }
+
+    /**
+     * 判断本请求是否异常
+     *
+     * @return 是否存在异常
+     */
+    public boolean isError() {
+        return responseException == null;
     }
 }
