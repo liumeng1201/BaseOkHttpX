@@ -3,6 +3,7 @@
     <center><h1>Kongzue BaseOkHttpX</h1></center> 
 </div>
 
+
 基于 OkHttp 的二次封装网络请求框架，更简洁易用，符合应用开发者使用习惯，能够自动处理异步线程问题，具备丰富的扩展性，全局拦截器以及实用的日志输出控制，让网络请求变得更加简单。
 
 <div align=center>
@@ -19,6 +20,7 @@
     <img src="https://img.shields.io/badge/Homepage-Kongzue.com-brightgreen.svg" alt="Homepage">
   </a>
 </div>
+
 
 ## BaseOkHttpX 优势
 
@@ -40,7 +42,7 @@
 
 BaseOkHttpX 发布在 Jitpack，你可以在 [Jitpack](https://jitpack.io/#kongzue/BaseOkHttpX) 最新版本和仓库信息
 
-最新版本： <a href="https://jitpack.io/#kongzue/BaseOkHttpX"><img src="https://jitpack.io/v/kongzue/BaseOkHttpX.svg" alt="Jitpack.io"></a> 
+最新版本： <a href="https://jitpack.io/#kongzue/BaseOkHttpX"><img src="https://jitpack.io/v/kongzue/BaseOkHttpX.svg" alt="Jitpack.io"></a>
 
 要引入到您的安卓项目，首先请在安卓项目根目录的 `settings.gradle` 文件里添加：
 
@@ -141,14 +143,14 @@ BaseOkHttpX 采用统一回调，即请求成功与失败均会在 onResponse �
 
 BaseOkHttpX 支持多种回调类型，具体如下：
 
-| 回调类                    | 说明                                   | 数据格式           |
-| ------------------------- |--------------------------------------|----------------|
-| [BytesResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BytesResponseListener.java)     | 会以数组类型的返回服务器响应的字节                    | `byte[]`       |
-| [ResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/ResponseListener.java)          | 会以文本格式的返回服务器响应的数据                    | `String`       |
-| [JsonResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/JsonResponseListener.java)      | 会以 JsonMap 对象格式返回服务器响应的 json 数据      | `JsonMap`      |
+| 回调类                                                       | 说明                                                         | 数据格式       |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | -------------- |
+| [BytesResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BytesResponseListener.java) | 会以数组类型的返回服务器响应的字节                           | `byte[]`       |
+| [ResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/ResponseListener.java) | 会以文本格式的返回服务器响应的数据                           | `String`       |
+| [JsonResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/JsonResponseListener.java) | 会以 JsonMap 对象格式返回服务器响应的 json 数据              | `JsonMap`      |
 | [OpenAIAPIResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/OpenAIAPIResponseListener.java) | 支持流式标准 OpenAI API 请求返回的经过处理格式化后的文本数据 | `String`       |
-| [BaseResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BaseResponseListener.java)      | 仅返回原始的 okHttp 的 ResponseBody 用于自行处理  | `ResponseBody` |
-| [BitmapResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BitmapResponseListener.java)    | 会以位图 Bitmap 格式的返回服务器响应的数据            | `Bitmap`       |
+| [BaseResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BaseResponseListener.java) | 仅返回原始的 okHttp 的 ResponseBody 用于自行处理             | `ResponseBody` |
+| [BitmapResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BitmapResponseListener.java) | 会以位图 Bitmap 格式的返回服务器响应的数据                   | `Bitmap`       |
 
 ### 添加参数
 
@@ -259,6 +261,23 @@ BaseOkHttpX.cookieStore = (HashMap<HttpUrl, List<Cookie>>)
 BaseOkHttpX.httpRequestDetailsLogs = (boolean)
 ```
 
+## 生命周期
+
+BaseOkHttpX 支持绑定 activity 生命周期，只需要在创建请求时传入 context 参数即可绑定 activity 的生命周期（需要 context 对象是 LifecycleOwner），在 activity 生命周期结束时自动停止请求，例如：
+
+```java
+Post.create(MainActivity.this, "/api/login")
+```
+
+反过来，BaseOkHttpX 自身也具备 LifecycleOwner，你可以通过 `getLifecycle()` 方法获取请求的 LifecycleOwner 进行其他处理，以下是关于 BaseOkHttpX 请求生命周期的状态描述：
+
+| 状态        | 执行时方法           | 说明                               |
+| ----------- | -------------------- | ---------------------------------- |
+| INITIALIZED | 构造函数             | 请求对象被构造时的默认状态         |
+| CREATED     | go()                 | OkHttpClient 构建后变更为此状态    |
+| STARTED     | setRequesting(true)  | 请求状态变更为开始时同步变更此状态 |
+| DESTROYED   | setRequesting(false) | 请求状态结束或失败时变更为此状态   |
+
 ## 上传和下载
 
 ### 上传文件
@@ -356,11 +375,48 @@ OpenAIAPIResponseListener(){
 }
 ```
 
+## 多请求统一返回
+
+BaseOkHttpX 支持同时发起多个请求，在统一回调中一并处理请求结果，因多个请求耗费时长长短不一，BaseOkHttpX 会在最后一个请求返回后执行统一回调。举例如下：
+
+```java
+Get.create("/api/sentences")									// 创建主请求
+        .with(Post.create("/api/login")				// 创建并行请求1
+                .setParameter(new JsonMap()
+                        .set("account", "username")
+                        .set("password", "123456")
+                ))
+        .with(Get.create("/api/sentences"))		// 创建并行请求2
+        .go(new MultiResponseListener() {			// 发起请求，使用统一回调处理
+            @Override
+            public void response(BaseHttpRequest[] httpRequest, String[] response, Exception[] errors) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int i = 0; i < httpRequest.length; i++) {
+                    stringBuilder.append("请求").append(i + 1).append("：").append(httpRequest[i].getSubUrl()).append("\n请求结果：\n").append(errors[i] == null ? response[i] : errors[i]).append("\n\n");
+                }
+                // 将结果显示在 UI 上
+                binding.txtResult.setText(stringBuilder.toString());
+            }
+        });
+```
+
+并行请求回调器也支持多种类型返回：
+
+| 回调类                                                       | 说明                                               | 数据格式       |
+| ------------------------------------------------------------ | -------------------------------------------------- | -------------- |
+| [BytesMultiResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BytesMultiResponseListener.java) | 会以数组集类型的返回服务器响应的字节               | `byte[]`       |
+| [MultiResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/MultiResponseListener.java) | 会以文本集返回服务器响应的数据                     | `String`       |
+| [JsonMultiResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/JsonMultiResponseListener.java) | 会以 JsonMap 对象集返回服务器响应的 json 数据      | `JsonMap`      |
+| [BeanMultiResponseListener<T>](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BeanMultiResponseListener.java) | 会将 Json 转换为 JavaBean 对象返回                 | `<T>`          |
+| [BaseMultiResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BaseMultiResponseListener.java) | 仅返回原始的 okHttp 的 ResponseBody 集用于自行处理 | `ResponseBody` |
+| [BitmapMultiResponseListener](BaseOkHttpX/src/main/java/com/kongzue/baseokhttp/x/interfaces/BitmapMultiResponseListener.java) | 会以位图 Bitmap 格式的集合返回服务器响应的数据     | `Bitmap`       |
+
 ## 日志输出
 
 BaseOkHttpX 的日志输出会在请求发起时和返回时进行打印，通过 `BaseOkHttpX.debugMode = true` 开启日志输出即可在 Logcat 中看到打印的请求日志：
 
 完整的日志请求举例：
+
 ```
 -------------------------------------
 发出GET请求:https://api.apiopen.top/api/sentences?customKey=customValue&ids%5B%5D=1&ids%5B%5D=2&ids%5B%5D=3&ids%5B%5D=4&ids%5B%5D=5&t1=v1 请求时间：2025-06-18 22:45:45.527
@@ -384,10 +440,17 @@ customKey=customValue&ids[]=1&ids[]=2&ids[]=3&ids[]=4&ids[]=5&t1=v1
 =====================================
 ```
 
-## 额外设置
+## 额外方法和设置
 
 Get、Post、Delete、Patch、Put 在创建请求后会返回实例化的 `BaseHttpRequest` 对象，BaseHttpRequest 还支持一些细节设置，例如：
+
 ```java
+// 获取本次请求的节点 url
+.getSubUrl()
+  
+// 获取本次请求的完整 url（含服务器地址和节点地址，GET 请求还会包含 url 参数）
+.getUrl()
+
 // 单独设置本次请求是否输出日志
 .setShowLogs(boolean)
 
@@ -405,6 +468,21 @@ Get、Post、Delete、Patch、Put 在创建请求后会返回实例化的 `BaseH
 
 // 判断是否正在请求中
 (boolean) = .isRequesting()
+  
+// 判断请求是否失败
+(boolean) = .isError()
+  
+// 在请求完成后获取服务器响应结果的数据字节
+(byte[]) = .getResponseBytes()
+  
+// 在请求完成后获取服务器响应结果的媒体类型
+(MediaType) = .getResponseMediaType()
+  
+// 在请求完成后获取服务器响应结果的错误信息
+(Exception) = .getResponseException()
+  
+// 重新请求
+.retry()
 ```
 
 ## ToDo
@@ -415,6 +493,7 @@ BaseOkHttpX 刚刚完成，还有部分不足，以下是一个待办清单，�
 - WebSocket 支持
 - 其他类型的请求结果
 ```
+
 ## 观星者
 
 [![Stargazers over time](https://starchart.cc/kongzue/BaseOkHttpX.svg?a=19)]([https://starchart.cc/kongzue/BaseOkHttpX](https://github.com/kongzue/BaseOkHttpX/stargazers))
@@ -438,4 +517,3 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
-
