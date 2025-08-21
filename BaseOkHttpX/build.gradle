@@ -1,13 +1,13 @@
 apply plugin: 'com.android.library'
 
 android {
-    namespace 'com.kongzue.baseokhttp.x'
+    namespace 'com.lm.baseokhttp.x'
     compileSdk 31
 
     defaultConfig {
         minSdk 21
-        versionCode 7
-        versionName "1.2.4"
+        versionCode 1
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"

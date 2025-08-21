@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.kongzue.baseokhttpx.demo'
+    namespace 'com.lm.baseokhttpx.demo'
     compileSdk 31
 
     defaultConfig {
-        applicationId "com.kongzue.baseokhttpx.demo"
+        applicationId "com.lm.baseokhttpx.demo"
         minSdk 21
         targetSdk 31
         versionCode 7
