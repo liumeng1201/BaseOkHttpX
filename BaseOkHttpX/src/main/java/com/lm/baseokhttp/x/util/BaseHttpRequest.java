@@ -77,6 +77,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 
 /**
  * 所有 HTTP 请求的基础类，提供通用的请求能力和配置。
@@ -182,7 +183,7 @@ public class BaseHttpRequest implements LifecycleOwner {
         requestInfo = new RequestInfo(url, getRequestParameter());
         if (BaseOkHttpX.disallowSameRequest && equalsRequestInfo(requestInfo) != null) {
             LockLog.logE(TAG_RETURN, "拦截重复请求:" + requestInfo);
-            onFail(new SameRequestException( requestInfo));
+            onFail(new SameRequestException(requestInfo));
             return;
         }
         addRequestInfo(requestInfo);
@@ -486,7 +487,11 @@ public class BaseHttpRequest implements LifecycleOwner {
         };
         switch (requestType) {
             case POST:
-                if (requestBody != null) builder.post(requestBody);
+                if (requestBody != null) {
+                    builder.post(requestBody);
+                } else {
+                    builder.post(Util.EMPTY_REQUEST);
+                }
                 break;
             case PUT:
                 if (requestBody != null) builder.put(requestBody);
@@ -1081,7 +1086,6 @@ public class BaseHttpRequest implements LifecycleOwner {
 
     /**
      * 重新发起请求。
-     *
      */
     public void retry() {
         cancel();
